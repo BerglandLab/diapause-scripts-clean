@@ -1,0 +1,3 @@
+/mnt/internal_2/priscilla/HSparents/variants/inbred.ug.dgrp2_snp.randomSubset.noREP.noINDEL.vcf.truthiness.vcf 
+/mnt/internal_2/priscilla/HSparents/variants/recalibrate_SNP.tranches 
+/mnt/internal_2/priscilla/HSparents/variants/repMasker.dgrp2_indel_100bp.sort.bed 
