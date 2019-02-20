@@ -58,64 +58,6 @@ if(!file.exists(paste(filestem,"_LOCO_Eigenstrat_strict_both.Rdat", sep="")) | !
                           snp.id=pass,
                           maf=.05)
 
-
-    pcaOut <- foreach(i=c("chr2L", "chr2R", "chr3L" ,"chr3R", "chrX"))%do%{
-      if(i=="chr2L" | i=="chr2R"){
-        chr.to.use=c("chr3L", "chr3R", "chrX")
-      }
-      else if(i=="chr3L"| i=="chr3R"){
-        chr.to.use=c("chr2L", "chr2R", "chrX")
-      }
-      else if(i=="chrX"){
-        chr.to.use=c("chr2L", "chr2R", "chr3L", "chr3R")
-      }
-    snpset.use <- unlist(snpset[chr.to.use])
-    pca.temp <- snpgdsPCA(geno, snp.id=snpset.use, autosome.only=FALSE, maf=maf, sample.id = ids.to.use,
-                          missing.rate=missing.rate, num.thread=threads)
-    
-  #snpgdsPCASNPLoading(pca.temp, genofile)
-  
-    pca.dt <- data.table(pc1=pca.temp$eigenvect[,1],
-                       pc2=pca.temp$eigenvect[,2],
-                       pc3=pca.temp$eigenvect[,3],
-                       pc4=pca.temp$eigenvect[,4],
-                       pc5=pca.temp$eigenvect[,5],
-                       pc6=pca.temp$eigenvect[,6],
-                       pc7=pca.temp$eigenvect[,7],
-                       pc8=pca.temp$eigenvect[,8],
-                       pc9=pca.temp$eigenvect[,9],
-                       pc10=pca.temp$eigenvect[,10],
-                       pc11=pca.temp$eigenvect[,11],
-                       pc12=pca.temp$eigenvect[,12],
-                       pc13=pca.temp$eigenvect[,13],
-                       pc14=pca.temp$eigenvect[,14],
-                       pc15=pca.temp$eigenvect[,15],
-                       pc16=pca.temp$eigenvect[,16],
-                       pc17=pca.temp$eigenvect[,17],
-                       pc18=pca.temp$eigenvect[,18],
-                       pc19=pca.temp$eigenvect[,19],
-                       pc20=pca.temp$eigenvect[,20],
-                       pc21=pca.temp$eigenvect[,21],
-                       pc22=pca.temp$eigenvect[,22],
-                       pc23=pca.temp$eigenvect[,23],
-                       pc24=pca.temp$eigenvect[,24],
-                       pc25=pca.temp$eigenvect[,25],
-                       pc26=pca.temp$eigenvect[,26],
-                       pc27=pca.temp$eigenvect[,27],
-                       pc28=pca.temp$eigenvect[,28],
-                       pc29=pca.temp$eigenvect[,29],
-                       pc30=pca.temp$eigenvect[,30],
-                       pc31=pca.temp$eigenvect[,31],
-                       pc32=pca.temp$eigenvect[,32],
-                       id=pca.temp$sample,
-                       chrs=i)
-    #pca.dt
-  }
-  
-  pcaOut <- rbindlist(pcaOut)
-
-  write.table(pcaOut, paste(filestem, "_LOCO_PCA_strict_both.txt", sep=""), quote=FALSE, row.names=FALSE, sep="\t")
-
   print("caclulating LOCO GRM")
 
   loco.list=list()

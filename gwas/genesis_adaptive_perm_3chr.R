@@ -174,6 +174,6 @@ draws.sum[,perm:=perm]
 draws.sum[,seed:=seed]
 
 
-  write.table(draws.sum, paste("/scratch/pae3g/final_reconstruction2/adaptive_perm_", perm, ".txt", sep=""), quote=FALSE, row.names=FALSE, sep="\t")
+ write.table(draws.sum, paste("/scratch/pae3g/final_reconstruction2/adaptive_perm_", perm, "_", pheno, ".txt", sep=""), quote=FALSE, row.names=FALSE, sep="\t")
 
 
