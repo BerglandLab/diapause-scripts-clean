@@ -26,7 +26,7 @@ association mapping, and which SNPs need additional permutations
 * generate input (file names, permutation numbers, and random seeds)
 with "seeded\_permutation\_input.R"
 
- *use "run\_seeded\_permutations.sh" to run "genesis\_\mapping.R" for
+ * use "run\_seeded\_permutations.sh" to run "genesis\_\mapping.R" for
  all imputations/permutations
 
 ## summarize imputations
