@@ -1,4 +1,4 @@
-#Overview
+# Overview
 
 This set of scripts has everything required to perform association
 mapping using the R package "GENESIS". GENESIS requires a genetic
@@ -21,25 +21,25 @@ association mapping, and which SNPs need additional permutations
 
 * use "makeGDS\_LOCO\_GRM.R"
 
-##run gwas for 100 imputations of raw data + 100 permutations
+## run gwas for 100 imputations of raw data + 100 permutations
 
-*generate input (file names, permutation numbers, and random seeds)
+* generate input (file names, permutation numbers, and random seeds)
 with "seeded\_permutation\_input.R"
 
-*use "run\_seeded\_permutations.sh" to run "genesis\_\mapping.R" for
+ *use "run\_seeded\_permutations.sh" to run "genesis\_\mapping.R" for
  all imputations/permutations
 
-##summarize imputations
+## summarize imputations
 
 * use "summarize_impuations.R" to calculate mean and median gwas statistics for
   all permutations
 
-##perform adaptive permutations
+## perform adaptive permutations
 
 * input is also generated in "seeded\_permutation\_input.R"
 * use "run\_adaptive\_permutations.sh" to run "genesis\_adaptive\_perm\_3chr.R"
 
-##calculate empirical p-values
+## calculate empirical p-values
 
 * "adaptive\_permutation\_summary.R" combines first 100 and adaptive
   permutations to calculate empirical p-values for original data (perm
