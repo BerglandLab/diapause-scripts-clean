@@ -78,8 +78,9 @@ GdsReader.par <- function (filename, allow.fork) {
 
 filters=fread("/scratch/pae3g/final_reconstruction2/hwe_missing_maf_filters.txt")
 
-
 draws<-foreach(draw=c(1:100))%do%{
+    
+#draws<-foreach(draw=c(1:100))%do%{
   phenos <- fread("/scratch/pae3g/phenos/phenos_062018.txt")
   setkey(phenos, id)
   ### some twiddles	

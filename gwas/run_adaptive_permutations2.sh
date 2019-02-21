@@ -12,5 +12,5 @@ module load R/3.5.1
 
 Rscript /scratch/pae3g/genome-reconstruction/scripts/genesis_adaptive_perm_3chr.R $pop $pheno $perm $seed
 
-
-#sbatch --array=2-500%100 --account=bergland-erickson --ntasks-per-node=20 --partition=standard --mem=192G --time=0-10:00:00 /scratch/pae3g/genome-reconstruction/scripts/run_adaptive_permutations2.sh
+#Use this to run 500 permutations of selected snps
+#sbatch --array=1-1%100 --account=bergland-erickson --ntasks-per-node=20 --partition=standard --mem=192G --time=0-10:00:00 /scratch/pae3g/genome-reconstruction/scripts/run_adaptive_permutations2.sh
