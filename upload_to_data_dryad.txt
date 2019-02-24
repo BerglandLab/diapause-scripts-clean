@@ -4,3 +4,6 @@
 
 /scratch/pae3g/hybrid/PAE_AOB_library_metadata_all.txt
 /scratch/pae3g/final_reconstruction2/parent_het_per_snp.txt
+"/scratch/pae3g/final_reconstruction2/hwe_missing_maf_filters.txt"
+/mnt/pricey_2/priscilla/hybrid/hc/hs.hc.A.keep.vcf
+/mnt/pricey_2/priscilla/hybrid/hc/hs.hc.B.keep.vcf
