@@ -3,8 +3,6 @@ library(GENESIS, quietly=TRUE)
 library(data.table, quietly=TRUE)
 library(SNPRelate, quietly=TRUE)
 library(gdsfmt, quietly=TRUE)
-library(doMC, quietly=TRUE)
-registerDoMC(20)
 library(foreach, quietly=TRUE)
 
 sessionInfo()
@@ -151,7 +149,7 @@ draws<-foreach(draw=c(1:100))%do%{
   
     groups <- split(snpIDs, ceiling(seq_along(snpIDs)/ceiling(length(snpIDs)/20)))
   
-    assoc <- foreach(i=1:length(groups))%dopar%{
+    assoc <- foreach(i=1:length(groups))%do%{
     
       model <- assocTestMM(genoData = genoData, 
                          nullMMobj = nullmod, 
@@ -179,6 +177,6 @@ draws.sum[,perm:=perm]
 draws.sum[,seed:=seed]
 
 
- write.table(draws.sum, paste("/scratch/pae3g/final_reconstruction2/adaptive_perm_", perm, "_", pheno, ".txt", sep=""), quote=FALSE, row.names=FALSE, sep="\t")
+ write.table(draws.sum, paste("/scratch/pae3g/final_reconstruction2/adaptive_perm_", perm, "_", phenotype, ".txt", sep=""), quote=FALSE, row.names=FALSE, sep="\t")
 
 
