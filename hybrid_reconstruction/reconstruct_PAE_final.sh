@@ -30,10 +30,142 @@ maxNSites=5000      # Maximum number of SNPs per chromosome to use for imputatio
 
 # END parameter definitions
 #
-
+#
+#
+#
+#
+# BEGIN calculate .bam file stats
 
 cd ${workDir}
 
+if [[ ! -f "$ind_id".bam.stats ]]; then
+    echo "calculating .bam file stats"
+    ${topDirectory}/etc/samtools idxstats $bamDir/${ind_id}.merged.bam > ${ind_id}.bam.stats
+fi
+
+# END calculate .bam file stats
+#
+#
+#
+#
+#
+# BEGIN calculating readcounts
+
+if [[ ! -f $ind_id.readcounts.gz ]]; then
+    echo "calculating readcounts for $ind_id"
+
+    java \
+    -Xmx6G \
+    -jar $gatk \
+    -R all_dmel.fasta \
+    -T ASEReadCounter \
+    -I $bamDir/$ind_id.merged.bam \
+    -o $ind_id.readcounts \
+    -sites haplotypes.vcf
+    gzip $ind_id.readcounts
+fi
+
+# END calculating readcounts
+#
+#
+#
+#
+#
+# BEGIN calculate haplotype freqs with HARP
+
+
+function getFreqs {
+    topDirectory=$1
+    echo $topDirectory
+    reconstructionGroup=$2
+    echo $reconstructionGroup
+    ind_id=$3
+    echo $ind_id
+    chromosome=$4
+    echo $chromosome
+
+
+    workDir=$topDirectory/$reconstructionGroup
+
+    referenceGenome=$workDir/all_dmel.fasta
+
+    window_step=100000
+    window_width=100000
+
+    picard=$topDirectory/etc/picard.jar
+    pear=$topDirectory/etc/pear
+    bwa=$topDirectory/etc/bwa/bwa
+    harp=$topDirectory/etc/harp
+
+
+# iterate HARP through chromosomes
+
+if [[ ! -f "$workDir/$ind_id.freqs.gz" ]]; then
+# if final freqs output of all chromosomes does not exist
+
+    # continue if THIS chromosome is done
+    if [[ -f "$workDir/$ind_id.$chromosome.freqs" ]]; then
+        echo "chromosome $chromosome already complete"
+    else
+    echo working on chr $chromosome
+
+        echo starting harp on chromosome $chromosome
+        # change to ramdisk directory for fast read/write of harp operations
+	ramdiskDir=/dev/shm/$USER/$SLURM_JOB_ID/$SLURM_ARRAY_TASK_ID/$reconstructionGroup/$ind_id/$chromosome
+	echo $ramdiskDir
+        mkdir -p $ramdiskDir && cd $ramdiskDir
+
+	pwd
+
+     length=$(awk -v chr=$chromosome '$1==chr {print $2}' $workDir/$ind_id.bam.stats)
+
+        # Run harp like
+        echo running harp like
+        $harp like \
+        --bam $bamDir/$ind_id.merged.bam \
+        --region $chromosome:1-$length \
+        --refseq $referenceGenome \
+        --snps $workDir/$chromosome.priors.csv \
+        --stem $ind_id.$chromosome
+
+        # Run harp freq
+        echo running harp freq
+        $harp freq \
+        --bam $bamDir/$ind_id.merged.bam \
+        --region $chromosome:1-$length \
+        --refseq $referenceGenome \
+        --snps $workDir/$chromosome.priors.csv \
+        --stem $ind_id.$chromosome \
+        --window_step $window_step \
+        --window_width $window_width \
+        --em_min_freq_cutoff 0.0001
+
+        mv $ind_id.$chromosome.freqs $workDir && cd $workDir  && rm -rf $ramdiskDir
+    fi
+else
+    echo "harp freq file already exists for $chromosome"
+fi
+}
+
+export -f getFreqs
+
+for chr in 2L 2R 3L 3R X; do
+    getFreqs $topDirectory $reconstructionGroup $ind_id $chr
+done
+
+
+echo "all chromosomes done for ind $ind_id, cleaning up"
+
+cd $workDir && rm -rf /dev/shm/$USER/$SLURM_JOB_ID/$SLURM_ARRAY_TASK_ID
+cat $workDir/$ind_id.*.freqs | gzip -c > $workDir/$ind_id.freqs.gz && rm $workDir/$ind_id.*.freqs
+
+# END calculate haplotype freqs with HARP
+#
+#
+#
+#
+#
+# BEGIN calculate most likely parents
 
 module load R/3.3.0
 cd ${workDir}
@@ -57,6 +189,12 @@ write.table(mlp, file="", quote=FALSE, row.names=FALSE, col.names=TRUE, sep="\t"
 EOF
 
 
+
+# END calculate haplotype freqs with HARP
+#
+#
+#
+#
 #
 # BEGIN preparation of harp input file
 
@@ -128,7 +266,7 @@ for(chr.i in unique(bed[,chr])) {
     cat(chr.i)
     cat("\n")
     chosen.founders <- sort(mlp.chosen[chromosome==chr.i][,lineID])
-    
+
     # If no most likely founders for this chromosome, then skip. This should not happen.
     if(length(chosen.founders)==0) {
         cat("No most likely founders for chromosome ")
@@ -153,23 +291,23 @@ for(chr.i in unique(bed[,chr])) {
         # Subtract 1, such that "0/0" is now 0, "1/1" is now 1
         vcf.sub[, (chosen.founders) := lapply(.SD, "-", 1), .SDcols=chosen.founders]
     }
-    
+
     vcf.sub[, nRef := apply(.SD, 1, function(x) sum(x == 0, na.rm=TRUE)), .SDcols=chosen.founders]
     vcf.sub[, nAlt := apply(.SD, 1, function(x) sum(x == 1, na.rm=TRUE)), .SDcols=chosen.founders]
     vcf.sub[, refFreq := nRef/(nRef+nAlt)]
     vcf.sub[, altFreq := nAlt/(nRef+nAlt)]
     setkey(vcf.sub, ID)
-    
+
     # Merge in sequenced allele freq
     vcf.sub.merge <- merge(vcf.sub, readcounts, by.x="ID", by.y="variantID")[refFreq != 1 & altFreq != 1 & otherBases == 0 & improperPairs == 0]
     vcf.sub.merge[, c("totalCount","lowMAPQDepth","lowBaseQDepth","rawDepth","otherBases","improperPairs") := NULL]
     vcf.sub.merge[, "imputed_ind" := ifelse(refCount > 0 & altCount > 0, "12",
                                ifelse(altCount==0, "1N",
                                ifelse(refCount==0, "2N", "NN")))]
-                               
+
     # Select up to maximum number of SNPs
     vcf.sub.merge[,indx := 1:.N]
-    
+
     # Retain ALL heterozygous sites
     vcf.sub.merge[refCount>0 & altCount>0, marker := TRUE]
     vcf.sub.merge[, freq := min(refFreq, altFreq), by=indx]
@@ -179,7 +317,7 @@ for(chr.i in unique(bed[,chr])) {
     retainmentPercent <- 0.002
     retainNSites <- trunc(nSites * retainmentPercent)
 
-    
+
 
     if(dim(vcf.sub.merge)[1] <= maxNSites) {
         vcf.sub.merge[, marker := TRUE]
@@ -192,7 +330,7 @@ for(chr.i in unique(bed[,chr])) {
 
     markers <- vcf.sub.merge[marker==TRUE][sample(.N, size=min(maxNSites, .N), replace=FALSE)]
     setkey(markers, "CHROM", "POS")
-    markers[, c("contig", "position", "refAllele", "altAllele", "refCount", "altCount", "freq", "indx", "marker", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "refFreq", "altFreq", "nRef", "nAlt") := NULL] 
+    markers[, c("contig", "position", "refAllele", "altAllele", "refCount", "altCount", "freq", "indx", "marker", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT", "refFreq", "altFreq", "nRef", "nAlt") := NULL]
     setnames(markers, "CHROM", "Chromosome")
     setnames(markers, "ID", "SNP")
     markers[, cM := recombination_function[[chr.i]](POS)][]
@@ -214,7 +352,7 @@ EOF
 #
 #
 #
-# START RABBIT 
+# START RABBIT
 
 module load mathematica
 # Generate mathematica script
@@ -387,7 +525,7 @@ while read chromosome start stop par1 par2; do
     col2=${founderIndices[[$par2]]}
     /scratch/$USER/genome-reconstruction/etc/htslib/bin/tabix reconstruct.vcf.gz ${chromosome}:${start}-${stop} | awk -v col1=$col1 -v col2=$col2 '{print $1,$2,$col1,$col2}' >> ${ind_id}.estimate.14.vcf
 done < <(awk 'NR > 1 {print}' ${ind_id}.estimate.14.haps)
-gzip ${ind_id}.estimate.14.vcf 
+gzip ${ind_id}.estimate.14.vcf
 
 ls ${ind_id}.*RABBIT.out.csv | xargs rm
 

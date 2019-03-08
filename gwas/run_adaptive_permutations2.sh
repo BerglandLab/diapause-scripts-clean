@@ -17,3 +17,6 @@ Rscript /scratch/pae3g/genome-reconstruction/scripts/genesis_adaptive_perm_3chr_
 
 
 #sbatch --array=1-1%100 --account=bergland-erickson --ntasks-per-node=1 --partition=standard --mem=60G --time=0-72:00:00 /scratch/pae3g/genome-reconstruction/scripts/run_adaptive_permutations2.sh
+
+
+#sbatch --array=2-2%100 --account=bergland-erickson --ntasks-per-node=1 --partition=standard --mem=12G --time=0-72:00:00 /scratch/pae3g/genome-reconstruction/scripts/run_adaptive_permutations2.sh
