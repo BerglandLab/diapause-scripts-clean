@@ -46,7 +46,6 @@ genotyped_samples<- read.gdsn(index.gdsn(geno, "sample.id"))
 
 if(!file.exists(paste(filestem,"_LOCO_Eigenstrat_strict_both.Rdat", sep="")) | !file.exists(paste(filestem, "_LOCO_PCA_strict_both.txt", sep=""))) {
     
-    print("caculating PCA")
     ids.to.use=intersect(genotyped_samples, phenos$sample.id)
 
     snpset <- snpgdsLDpruning(geno, 
