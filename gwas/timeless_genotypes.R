@@ -67,3 +67,14 @@ haps<-data.table(sample.id=y$sample.id,
 
 write.csv(haps, "/mnt/sammas_storage/bergland-lab/Priscilla/tim_parental_genos.csv", row.names=F)
 
+
+tim.geno<-merge(tim.geno, haps[,.(geno1,line1)],  "line1")
+tim.geno<-merge(tim.geno, haps[,.(geno2, line2)], "line2")
+
+tim.geno[geno1==0&geno2==0, final.geno:=0]
+tim.geno[geno1==0&geno2==2, final.geno:=1]
+tim.geno[geno1==2&geno2==0, final.geno:=1]
+tim.geno[geno1==2&geno2==2, final.geno:=2]
+
+write.csv(tim.geno, "/scratch/pae3g/tim_genotypes.csv")
+

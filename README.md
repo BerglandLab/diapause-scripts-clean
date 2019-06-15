@@ -10,4 +10,6 @@ This project contains all scripts necessary for the analysis of data for Erickso
 
 4. **gwas** contains the scripts for performing genome-wide association mapping of the diapause phenotype using the GENESIS software package in R. The scripts include the permutation analysis and the calculation of empirical p-values relative to permutation.
 
-5. **enrichment** contains the scripts used for looking at the enrichment of the diapause GWAS results relative to known clinal and seasonal SNPs from the data in Bergland and Machado et al 2019.
+5. **clinal\_seasonal\_enrichment** contains the scripts used for looking at the enrichment of the diapause GWAS results relative to known clinal and seasonal SNPs from the data in Bergland and Machado et al 2019.
+
+6. **pop\_gen** contains scripts for the Tajima's D, African allele frequency, and IHS analysis of index SNPs
