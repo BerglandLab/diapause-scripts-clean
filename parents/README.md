@@ -1,4 +1,4 @@
-#Overview
+# Overview
 
 These scripts process new sequencing data for the inbred lines used
 to initiate the hybrid swarms. The new sequencing data was combined
@@ -9,21 +9,20 @@ vcf with more variants used for association mapping.
 
 ## Download and process existing parental sequence reads
 
-Use sraData.delim and download sraData.sh to download appropriate
-sequence files. Use mapr_sra2.sh to map and clean up the
-reads. Because one DGRP file is particularly large, the mapped reads
-were downsampled with following command: `samtools view -s .2 -b
-DGRP_28243.SRR835347.sort.dedup.renamed.bam >
-DGRP_28243.SRR835347.sort.dedup.renamed.downsampled.bam`
+* Use sraData.delim and download\_sraData.sh to download appropriate
+sequence files.
+* Use map\_sra2.sh to map and clean up the
+reads.
 
+##  map parental reads sequenced here
+
+* pear\_bwa.sh
 
 ## merge existing data and new data bam files
 
 
-###use haplotype_caller_rivanna.sh to make gVCFs for each of these
-merged samples
+## genotype parents
 
-
-
-
-
+* haplotype\_caller\_workflow.sh has all commands for executing calling haplotypes and making VCFs in GATK. This script uses haplotype\_caller\_rivanna.sh and submit\_haplotype\_caller.slurm
+* filter\_parents.R does additional filtering of SNPs on missing parental snp information
+*

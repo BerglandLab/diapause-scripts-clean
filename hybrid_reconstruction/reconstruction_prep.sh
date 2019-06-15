@@ -1,5 +1,12 @@
 #move files to rivanna cluster
 
+## filter parental snps for reconstruction using files produced in filter_parents.R
+
+bedtools intersect -header -a /mnt/pricey_2/priscilla/hybrid/hc/hs.hc.A.vcf -b /mnt/pricey_2/priscilla/hybrid/hc/hs.hc.A.keep.bed > /mnt/pricey_2/priscilla/hybrid/hc/hs.hc.A.keep.vcf
+
+bedtools intersect -header -a /mnt/pricey_2/priscilla/hybrid/hc/hs.hc.B.vcf -b /mnt/pricey_2/priscilla/hybrid/hc/hs.hc.B.keep.bed > /mnt/pricey_2/priscilla/hybrid/hc/hs.hc.B.keep.vcf
+
+
 #haplotypes.vcf has the highest quality snps for genome reconstruction
 scp hs.hc.A.keep.vcf pae3g@rivanna1.hpc.virginia.edu:/scratch/pae3g/genome-reconstruction/A/haplotypes.vcf
 scp hs.hc.B.keep.vcf pae3g@rivanna1.hpc.virginia.edu:/scratch/pae3g/genome-reconstruction/B/haplotypes.vcf
