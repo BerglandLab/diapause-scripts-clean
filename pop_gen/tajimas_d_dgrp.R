@@ -1,54 +1,36 @@
-#tajima's d
-#grep "#" dgrp2.vcf > header.txt
-#cat header.txt dgrp2.filtered.vcf > dgrp2.fh.vcf
-#make files and put in folder in bash:
-# 
-# for chr in 2L 2R 3L 3R X; do
-# echo $chr
-# cd /mnt/pricey_2/priscilla/
-# rm -r $chr
-# grep -e "#" -e $chr dgrp2.fh.vcf > dgrp2.$chr.vcf
-# mkdir $chr
-# mv dgrp2.$chr.vcf $chr
-# cd $chr
-# bgzip dgrp2.$chr.vcf
-# tabix -p vcf dgrp2.$chr.vcf.gz
-# done
 
-#install.packages("PopGenome")
-# library(PopGenome)
-# library(foreach)
-# library(data.table)
-# 
-# 
-# dgrpstats<-foreach(chr=c("2L", "2R", "3L", "3R", "X"))%do%{
-#     vcf<-readVCF(paste0("/mnt/pricey_2/priscilla/", chr, "/dgrp2.", chr, ".vcf.gz"), numcols=10000, tid=chr, frompos=1, topos=30000000, include.unknown=TRUE)
-#     sliding <- sliding.window.transform(vcf,1000,500,type=2)
-#     vcf <- neutrality.stats(vcf, FAST=T)
-#     sliding <- neutrality.stats(sliding)
-#     neutrality <- get.neutrality(sliding)[[1]]
-#     sliding <- linkage.stats(sliding, do.ZnS = T)
-#     linkage <- get.linkage(sliding)[[1]]
-#     sliding <- diversity.stats(sliding)
-#     diversity <- get.diversity(sliding)[[1]]
-#     stats <- cbind(neutrality,linkage,diversity)
-#     #clean up stats dataframe
-#     stats <- cbind(Row.names=rownames(stats),stats)
-#     rownames(stats) <- NULL
-#     stats <- as.data.table(stats)
-#     stats[,Start:=as.numeric(tstrsplit(Row.names, split=" - ")[[1]])]
-#     stats[,End:=Start+999]
-#     stats[,CHROM:=chr]
-#     rm(vcf)
-#     return(stats)
-# }
-# 
-# dgrpstats<-rbindlist(dgrpstats)
-# 
-# write.table(dgrpstats, "/mnt/pricey_2/priscilla/dgrp_tajimasd.txt", quote=F, row.names=F, sep="\t")
+library(PopGenome)
+library(foreach)
+library(data.table)
+
+dgrpstats<-foreach(chr=c("2L", "2R", "3L", "3R", "X"))%do%{
+    vcf<-readVCF(paste0("/mnt/pricey_2/priscilla/", chr, "/dgrp2.", chr, ".vcf.gz"), numcols=10000, tid=chr, frompos=1, topos=30000000, include.unknown=TRUE)
+    sliding <- sliding.window.transform(vcf,1000,500,type=2)
+    vcf <- neutrality.stats(vcf, FAST=T)
+    sliding <- neutrality.stats(sliding)
+    neutrality <- get.neutrality(sliding)[[1]]
+    sliding <- linkage.stats(sliding, do.ZnS = T)
+    linkage <- get.linkage(sliding)[[1]]
+    sliding <- diversity.stats(sliding)
+    diversity <- get.diversity(sliding)[[1]]
+    stats <- cbind(neutrality,linkage,diversity)
+    #clean up stats dataframe
+    stats <- cbind(Row.names=rownames(stats),stats)
+    rownames(stats) <- NULL
+    stats <- as.data.table(stats)
+    stats[,Start:=as.numeric(tstrsplit(Row.names, split=" - ")[[1]])]
+    stats[,End:=Start+999]
+     stats[,CHROM:=chr]
+     rm(vcf)
+     return(stats)
+ }
+ 
+ dgrpstats<-rbindlist(dgrpstats)
+ 
+ write.table(dgrpstats, "/mnt/pricey_2/priscilla/dgrp_tajimasd.txt", quote=F, row.names=F, sep="\t")
 
 
-#analyze with haplotype blocks
+#analyze with index snps
 library(PopGenome)
 library(foreach)
 library(data.table)
@@ -93,16 +75,3 @@ th.test<-rbindlist(th.test)
 
 write.table(th.test, "/mnt/pricey_2/priscilla/tajimasd_clumps200kb.txt", quote=F, row.names=F, sep="\t")
 
-tj<fread("/mnt/pricey_2/priscilla/tajimasd_clumps200kb.txt")
-
-tj.sum<-tj[,.(med=median(as.numeric(tajimas.d), na.rm=T),
-                   max=max(as.numeric(tajimas.d), na.rm=T),
-                   min=min(as.numeric(tajimas.d), na.rm=T)), 
-                .(perm, top)]
-tj.sum.melt<-melt(tj.sum, id.vars=c("perm", "top"))
-
-ggplot(tj.sum.melt[perm!=0], aes(x=as.factor(top), y=value, color=variable))+
-    geom_quasirandom(dodge.width = .8, method="smiley")+
-    geom_point(data=tj.sum.melt[perm==0], aes(x=as.factor(top), y=value, group=variable), color="black" ,position=position_dodge(width=0.8))+
-    labs(x="Top # SNPs", y="tajima's d", color="")#+
-    #scale_color_discrete(labels=c("minimum", "median", "maximum"))
