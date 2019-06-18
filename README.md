@@ -1,6 +1,12 @@
 # Introduction
 
-This project contains all scripts necessary for the analysis of data for Erickson et al (in prep), examining the genetic basis of diapause in the model fruit fly _Drosophila melanogaster_.  The workflow procedes through the folders in the following order:
+This project contains all scripts necessary for the analysis of data for Erickson et al (submitted), examining the genetic basis of diapause in the model fruit fly _Drosophila melanogaster_.
+
+All sequence data has been deposited in the SRA in BioProject # PRJNA522357
+
+Most data files necessary for analysis and plotting are available on DataDryad.
+
+The workflow procedes through the folders in the following order:
 
 1. **parents** contains all scripts for the sequencing and variant analysis of the 68 parental strains. These scripts produce the final vcf files used for reconstruction of hybrid genotypes
 
