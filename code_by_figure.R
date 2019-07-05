@@ -64,21 +64,23 @@ p[temp.rack.cal>=13 & temp.rack.cal<14, temp.group:="13-14°C"]
 p[temp.rack.cal>=14, temp.group:="14°C +"]
 
 #pull in my diagram of ovary development
-a <- ggdraw() + draw_image("~/Box Sync/manuscripts/egg_stage_color_coded.jpg", scale = 0.9)
-
+#a <- ggdraw() + draw_image("~/Box Sync/manuscripts/egg_stage_color_coded.jpg", scale = 0.9)
+a<-ggplot()
 #plot ovary phenotype as a function of temperature group
-b<-ggplot(p[!is.na(diapause.group)], aes(temp.group))+geom_bar(aes(fill=diapause.group))+
-    labs(x="Temperature", 
+b.sum<-p[!is.na(diapause.group), .(n=.N), .(temp.group)]
+b.sum[,y:=1.02]
+b<-ggplot(p[!is.na(diapause.group)], aes(x=temp.group, fill=diapause.group))+geom_bar(position="fill")+
+         labs(x="Temperature", 
          fill="Ovary\nPhenotype", 
-         y="Number of Flies", 
+         y="Proportion of Flies", 
          title="All flies")+
     theme(axis.text.x=element_text(angle=45,hjust=1))
-
 #plot ovary stages of individuals with eggs
-c<-ggplot(p[!is.na(egg.group)], aes(temp.group))+geom_bar(aes(fill=egg.group))+
+c.sum<-p[!is.na(egg.group), .(n=.N), .(temp.group)]
+c<-ggplot(p[!is.na(egg.group)], aes(x=temp.group, fill=egg.group))+geom_bar(position="fill")+
     labs(x="Temperature", 
          fill="Ovary\nPhenotype", 
-         y="Number of Flies", 
+         y="Proportion of Flies", 
          title="Flies with eggs")+
     theme(axis.text.x=element_text(angle=45,hjust=1))+
     scale_fill_discrete(drop=F,limits = levels(p$egg.group), breaks=c("<=7", "8-9", "10", "11-14"))
@@ -170,12 +172,14 @@ summary(aov(glm(eggP~temp.rack.cal+(photoperiod)+swarm+generation, data=p, famil
 ## 16 core largemem for lambda/qq stuff
 library(data.table)
 library(foreach)
-library(doMC)
-registerDoMC(16)
+
 library(cowplot)
 library(ggbeeswarm)
 
-gwas<-fread("/scratch/pae3g/evolution/gwas_p_score_inv_id_perm0.txt.txt")
+library(doMC)
+registerDoMC(16)
+
+gwas<-fread("/scratch/pae3g/evolution/gwas_p_score_inv_id_perm0.txt")
 
 #adjust p values and add groupings for color coding the plt
 gwas[,color:=1]
@@ -202,9 +206,13 @@ chr.table[,fdr.group:=NA]
 
 mh<-ggplot(gwas[is.na(fdr.group)|fdr.group=="top 0.5%"], aes(x=id, y=-log10(gwas.p), color=as.factor(color)))+
     geom_point()+
-    scale_color_manual(values=c("black", "grey40", "#7CAE00", "#00BFC4", "#C77CFF", "#F8766D"))+
+    scale_color_manual(values=c("black", "grey", "#7CAE00", "#00BFC4", "#C77CFF", "#F8766D"))+
     geom_point(data=gwas[fdr.group=="FDR < .025" | fdr.group=="FDR < .05"], aes(x=id, y=-log10(gwas.p), color=fdr.group))+
-    theme(legend.position="none")+labs(x=NULL, y=expression("-log"[10]*"(P)"))+scale_x_continuous(breaks=chr.table$midpoint, labels=c("2L", "2R", "3L", "3R", "X"))
+    theme(legend.position="none")+labs(x=NULL, y=expression("-log"[10]*"(P)"))+scale_x_continuous(breaks=chr.table$midpoint, labels=c("2L", "2R", "3L", "3R", "X"))+
+    geom_hline(yintercept=-1*log10(.000239), color="#C77CFF", linetype="solid", size=1.5)+
+    geom_hline(yintercept=-1*log10(.001706), color="#C77CFF", linetype="dashed", size=1.5)+
+    geom_hline(yintercept=-1*log10(.006119), color="#C77CFF", linetype="dotted", size=1.5)
+    
 
 ##qqplot of permutation
 
@@ -217,7 +225,10 @@ dat<-foreach(perm=c(0,101:200))%dopar%{
     return(d)
 }
 
+
+
 dat<-rbindlist(dat)
+
 
 #subsample 1/10000th of data with p>0.05 for qqplots
 
@@ -236,7 +247,7 @@ qq<-ggplot(dat[perm==0], aes(x=e, y=o) )+
     geom_point(data=dat.perm, aes(x=e, y=o),  color="grey", size=0.1)+
     geom_abline(slope=1, intercept=0)
 
-
+qq
 
 ##calculate lambda gc values for gwas permutations
 
@@ -247,21 +258,23 @@ h<-fread("/scratch/pae3g/evolution/gcta_hsq.txt")
 
 y[,Source:="λ GC"]
 lambda.plot<-ggplot(y[perm!=0], aes(x=Source, y=lambda))+
-    geom_quasirandom(color="grey40", varwidth = TRUE, size=.5, method = "smiley")+
+    geom_quasirandom(color="grey", varwidth = TRUE, size=.5, method = "smiley")+
     geom_point(data=y[perm==0], aes(x=Source, y=lambda), color="lightseagreen", size=2)+labs(y=NULL, x=NULL)
 
 h.plot<-ggplot(h[perm!=0&(Source=="V(G)"|Source=="V(e)"|Source=="V(G)/Vp")], aes(x=Source, y=Variance))+
-    geom_quasirandom(color="grey40", varwidth = TRUE, size=.5, method = "smiley")+
+    geom_quasirandom(color="grey", varwidth = TRUE, size=.5, method = "smiley")+
     geom_point(data=h[perm==0&(Source=="V(G)"|Source=="V(e)"|Source=="V(G)/Vp")], aes(x=Source, y=Variance), color="lightseagreen", size=2)+labs(y=NULL, x=NULL)+scale_x_discrete(labels=c(expression("V"["e"]), expression("V"["g"]), expression("h"^2)))
 
 bottom<-plot_grid(qq, lambda.plot, h.plot, rel_widths =c(0.5, 0.15, 0.35), labels = c("B", "C", "D"), nrow=1, align="h")
 
 
 
-jpeg("/scratch/pae3g/Figure3.jpeg", height=8, width=7.75, res = 300, units = "in")
+tiff("/scratch/pae3g/Figure3.tif", height=7.5, width=7.5, res = 300, units = "in", compression="lzw")
 plot_grid(mh, bottom, nrow=2, labels=c("A",""), rel_heights = c(.5, .5))
 dev.off()
 
+
+gwas[perm==0&chr=="2L"&pos>3488986&pos<3513119]
 
 ####################################
 ##### FIGURE 4 #####################
@@ -338,8 +351,11 @@ dat<-data.table(freq=c(swarm.freqs$MinorFreq, dgrp.freqs$MinorFreq),
                 id=c(rep("hybrid swarm", length(swarm.freqs$MinorFreq)), 
                      rep("DGRP", length(dgrp.freqs$MinorFreq))))
 
+#as histogram:
 maf.hist<-ggplot(data=dat[id=="DGRP"], aes(x=freq, fill=id))+geom_histogram(binwidth=0.01, alpha=0.5, aes(y = stat(count / sum(count))))+labs(fill=NULL, x="Minor Allele Frequency", y="Proportion", title=" ")+geom_histogram(data=dat[id=="hybrid swarm"], aes(x=freq, fill=id, y = stat(count / sum(count))), binwidth=0.01, alpha=0.5)+ theme(legend.position = c(0.3, 0.5))
 
+#as density plot:
+maf.hist<-ggplot(data=dat[id=="DGRP"], aes(x=freq, fill=id, color="DGRP"))+stat_density(geom="line")+labs(fill=NULL, x="Minor Allele Frequency", y="Density", title=" ")+stat_density(data=dat[id=="hybrid swarm"], aes(x=freq, fill=id, color="hybrid\nswarm"), geom="line")+ theme(legend.position = c(0.3, 0.5))+scale_color_manual(values=c("#F8766D", "#00BFC4"))
 
 row2<-plot_grid(maf.hist, ld_heatmaps, rel_widths = c(0.3, 0.7), labels=c("D",""))
 
@@ -712,7 +728,8 @@ binomial_smooth <- function(...) {
 }
 
 effect<-ggplot(data=dat[!is.na(V1)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(V1)))+
-    geom_jitter(data=dat[!is.na(V1)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(V1)), height = 0.05, alpha=0.5, size=0.2)+labs(x="Temperature °C", y="Probability\nof diapause", color="")+
+    geom_jitter(data=dat[!is.na(V1)&V1!=0], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(V1)), height = 0.05, size=0.2)+labs(x="Temperature °C", y="Probability\nof diapause", color="")+
+    geom_jitter(data=dat[!is.na(V1)&V1==0], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(V1)), height = 0.05, size=0.2)+labs(x="Temperature °C", y="Probability\nof diapause", color="")+
     binomial_smooth()+scale_y_continuous(breaks=c(0,1))+
     theme(legend.position = c(0.5, 0.7))+
     scale_color_manual(values=c("#F8766D", "#7CAE00", "#00BFC4"), labels=c("fall/fall", "fall/spring", "spring/spring"))
@@ -771,11 +788,11 @@ info[chr=="2R"&pos>9234730]
 
 fst<-ggplot(c.tab, aes(x=plot.id, y=fst, color=as.factor(color)))+ 
     geom_point(size=0.5)+
-    labs(x=NULL, y=expression("F"["ST"]))+
+    labs(x="", y=expression("F"["ST"]))+
     scale_color_manual(values=c("black", "grey"))+
     scale_x_continuous(breaks=chr.table$midpoint, labels=c("2L", "2R", "3L", "3R", "X"))+
     geom_point(aes(x=676410, y=1), color="lightseagreen", size=2) +
-    theme(legend.position="none")
+    theme(legend.position="none")+lims(y=c(-.25,1))
 
 
 #try saving fst as a small jpeg to add into a pdf of other parts
@@ -1077,7 +1094,7 @@ dpgp.plot<-ggplot(dpgp.melt[perm!=0], aes(x=as.factor(top), y=value, color=varia
 
 
 pdf("/mnt/pricey_2/priscilla/Figure8.pdf", height=7, width=7)
-plot_grid( dpgp.plot,ihs.plot, tj.plot, nrow=3, align="v", labels=c("A", "B", "C"), rel_heights = c(0.3, 0.3, 0.4))
+plot_grid( dpgp.plot,ihs.plot, tj.plot, nrow=3, align="v", labels=c("A", "B", "C"), rel_heights = c(0.5, 0.3, 0.45))
 dev.off()
 
 
@@ -1302,8 +1319,394 @@ ggplot()+geom_rect(data=keep.paths[line!="UNKNOWN"],
     geom_rect(data=keep.paths[line=="UNKNOWN"], mapping=aes(xmin=cons.start/1000000, xmax=cons.stop/1000000, ymin=y1, ymax=y2))
 dev.off()
 
+###################################
+########## FIGURE S5 #############
+###################################
+
+#continues from data table produced in Figure 3
+p2L<-ggplot(y[perm!=0], aes(x=l.2L))+geom_histogram(binwidth=0.05, fill="grey85")+geom_vline(xintercept=y[perm==0,l.2L], color="lightseagreen", size=2)+labs(x="λ GC", title="Chr. 2L")+scale_x_continuous(limits=c(.5, 2.5), breaks=c(0.5,1, 1.5, 2,2.5))
+p2R<-ggplot(y[perm!=0], aes(x=l.2R))+geom_histogram(binwidth=0.05, fill="grey85")+geom_vline(xintercept=y[perm==0,l.2R], color="lightseagreen", size=2)+labs(x="λ GC", title="Chr. 2R")+scale_x_continuous(limits=c(.5, 2.5), breaks=c(0.5,1, 1.5, 2,2.5))
+p3L<-ggplot(y[perm!=0], aes(x=l.3L))+geom_histogram(binwidth=0.05, fill="grey85")+geom_vline(xintercept=y[perm==0,l.3L], color="lightseagreen", size=2)+labs(x="λ GC", title="Chr. 3L")+scale_x_continuous(limits=c(.5, 2.5), breaks=c(0.5,1, 1.5, 2,2.5))
+p3R<-ggplot(y[perm!=0], aes(x=l.3R))+geom_histogram(binwidth=0.05, fill="grey85")+geom_vline(xintercept=y[perm==0,l.3R], color="lightseagreen", size=2)+labs(x="λ GC", title="Chr. 3R")+scale_x_continuous(limits=c(.5, 2.5), breaks=c(0.5,1, 1.5, 2,2.5))
+pX<-ggplot(y[perm!=0], aes(x=l.X))+geom_histogram(binwidth=0.05, fill="grey85")+geom_vline(xintercept=y[perm==0,l.X], color="lightseagreen", size=2)+labs(x="λ GC", title="Chr. X")+scale_x_continuous(limits=c(.5, 2.5), breaks=c(0.5,1, 1.5, 2,2.5))
+
+
+
+pdf("/scratch/pae3g/Figure_S5.pdf", height=2.5, width=12)
+plot_grid(p2L, p2R, p3L, p3R, pX, nrow=1)
+dev.off()
+
+
+#############################
+### FIGURE S6 ##############
+#############################
+
+
+library(data.table)
+library(foreach)
+library(cowplot)
+library(viridis)
+library(SNPRelate)
+geno <- snpgdsOpen("/scratch/pae3g/genome-reconstruction/final2_draw1_replaced.vcf.gds", allow.fork=T)
+a<-snpgdsSNPList(gdsobj=geno)
+
+info<-data.table(snp.id=a$snp.id,
+                 chr=a$chromosome,
+                 pos=a$pos)
+
+perm.snps<-foreach(perm=c(0,101:119), .errorhandling="remove")%do%{
+    print(perm)
+    gwas<-fread(paste0("/scratch/pae3g/evolution/gwas_p_score_inv_id_perm", perm, ".txt"))
+    gwas<-merge(gwas, info, by=c("chr", "pos"))
+    snps<-(gwas[order(gwas.p)][1:101,snp.id])
+    ld<-snpgdsLDMat(geno, slide=-1,verbose=F,snp.id =snps , method='composite')$LD
+    m<-data.table(melt(ld))
+    m[,perm:=perm]
+    return(m)
+}
+
+perm.snps<-rbindlist(perm.snps)
+
+pdf("/scratch/pae3g/Figure_S13.pdf", height=7, width=8)
+ggplot(perm.snps, aes(x=Var1, y=Var2, fill=value*value))+
+    geom_tile()+
+    scale_fill_viridis(option="viridis")+ 
+    theme(line = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank())+
+    labs( fill=expression("R"^2))+
+    facet_wrap(~perm, scales="free")
+dev.off()
+
+
+
+#########################
+## FIGURE S7 ##########
+#########################
+
+library(data.table)
+library(SNPRelate)
+library(cowplot)
+
+tim.geno<-fread("/scratch/pae3g/tim_genotypes.csv")
+
+phenos<-fread("/nv/vol186/bergland-lab/Priscilla/phenos_062018.txt")
+phenos[photoperiod==9, pp:="9L:15D"]
+phenos[photoperiod==11, pp:="11L:13D"]
+phenos[photoperiod==13, pp:="13L:11D"]
+phenos[photoperiod==15, pp:="15L:9D"]
+phenos[,pp:=factor(phenos$pp, levels=c("9L:15D", "11L:13D", "13L:11D", "15L:9D"))]
+tim.genos<-merge(phenos, tim.geno, by="id")
+
+
+#open up hybrid file to pull cpo genotypes
+geno<-snpgdsOpen("/scratch/pae3g/genome-reconstruction/final3.vcf.gds")
+
+snp.dt <- data.table(snp.id=read.gdsn(index.gdsn(geno, "snp.id")),
+                     chr=read.gdsn(index.gdsn(geno, "snp.chromosome")),
+                     pos=read.gdsn(index.gdsn(geno, "snp.position")),
+                     alleles=read.gdsn(index.gdsn(geno, "snp.allele")))
+
+snp.dt[pos==13793588] #snp.id==2313328 #alleles =T/A
+y<-snpgdsGetGeno(geno, snp.id="2313328", with.id=T)
+
+cpo<-data.table("cpo.geno"=y$genotype[,1],
+                sample.id=y$sample.id)
+
+cpo<-merge(cpo, phenos, by="sample.id")
+
+
+binomial_smooth <- function(...) {
+    geom_smooth(method = "glm", method.args = list(family = "binomial"), se=FALSE)
+}
+
+left.top<-top<-ggplot(data=tim.genos[!is.na(final.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(final.geno)))+geom_jitter(data=tim.genos[!is.na(final.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(final.geno)), height = 0.1)+labs(x="Temperature °C", y="Diapause", color="tim genotype")+binomial_smooth()+scale_y_continuous(breaks=c(0,1))+scale_color_discrete(labels=c("s-tim/s-tim", "s-tim/ls-tim", "ls-tim/ls-tim"))
+
+left.bottom<-ggplot(data=cpo[!is.na(cpo.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(cpo.geno)))+geom_jitter(data=cpo[!is.na(cpo.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(cpo.geno)), height = 0.1)+labs(x="Temperature °C", y="Diapause", color="cpo genotype")+binomial_smooth()+scale_y_continuous(breaks=c(0,1))+scale_color_discrete(labels=c("A/A", "A/T", "T/T"))
+
+
+top<-ggplot(data=tim.genos[!is.na(final.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(final.geno)))+geom_jitter(data=tim.genos[!is.na(final.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(final.geno)), height = 0.1)+labs(x="Temperature °C", y="Diapause", color="tim genotype")+binomial_smooth()+scale_y_continuous(breaks=c(0,1))+facet_grid(.~pp)+scale_color_discrete(labels=c("s-tim/s-tim", "s-tim/ls-tim", "ls-tim/ls-tim"))
+
+
+bottom<-ggplot(data=cpo[!is.na(cpo.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(cpo.geno)))+geom_jitter(data=cpo[!is.na(cpo.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(cpo.geno)), height = 0.1)+labs(x="Temperature °C", y="Diapause", color="cpo genotype")+binomial_smooth()+scale_y_continuous(breaks=c(0,1))+facet_grid(.~pp)+scale_color_discrete(labels=c("A/A", "A/T", "T/T"))
+
+top.legend<-get_legend(left.top)
+bottom.legend<-get_legend(left.bottom)
+top.row<-plot_grid(left.top+theme(legend.position="none"),
+                   top+theme(legend.position="none"),
+                   top.legend,
+                   labels=c("A", "B", ""),
+                   rel_widths=c(.25, .6, .15),
+                   nrow=1 )
+
+
+bottom.row<-plot_grid(left.bottom+theme(legend.position="none"),
+                      bottom+theme(legend.position="none"),
+                      bottom.legend,
+                      labels=c("C", "D", ""),
+                      rel_widths=c(.25, .6, .15),
+                      nrow=1 )
+
+pdf("/scratch/pae3g/cpo_tim.pdf", height=6, width=10)
+plot_grid(top.row, bottom.row, nrow=2)
+dev.off()
+
+
+#stats for figure legend
+summary(glm(diapause.bin9~final.geno+temp.rack.cal+photoperiod+swarm.y+generation, data=tim.genos, family=binomial))
+summary(glm(diapause.bin9~final.geno+temp.rack.cal+swarm.y+generation, data=tim.genos[photoperiod==9], family=binomial))
+summary(glm(diapause.bin9~final.geno+temp.rack.cal+swarm.y+generation, data=tim.genos[photoperiod==11], family=binomial))
+summary(glm(diapause.bin9~final.geno+temp.rack.cal+swarm.y+generation, data=tim.genos[photoperiod==13], family=binomial))
+summary(glm(diapause.bin9~final.geno+temp.rack.cal+swarm.y+generation, data=tim.genos[photoperiod==15], family=binomial))
+
+summary(glm(diapause.bin9~cpo.geno+temp.rack.cal+photoperiod+swarm+generation, data=cpo, family=binomial))
+summary(glm(diapause.bin9~cpo.geno+temp.rack.cal+swarm+generation, data=cpo[photoperiod==9], family=binomial))
+summary(glm(diapause.bin9~cpo.geno+temp.rack.cal+swarm+generation, data=cpo[photoperiod==11], family=binomial))
+summary(glm(diapause.bin9~cpo.geno+temp.rack.cal+swarm+generation, data=cpo[photoperiod==13], family=binomial))
+summary(glm(diapause.bin9~cpo.geno+temp.rack.cal+swarm+generation, data=cpo[photoperiod==15], family=binomial))
+
+##########################
+#### FIGURE S8 ##########
+##########################
+
+#continues from code to make Figure 5!
+
+perm.sum[,excess:=TT-med.TT]
+perm.sum2[,excess:=TT-med.TT]
+
+#deal with 0s in excess
+perm.sum[,log10excess:=sign(excess)*log10(abs(excess))]
+perm.sum2[,log10excess:=sign(excess)*log10(abs(excess))]
+
+perm.sum[is.na(log10excess), log10excess:=0]
+perm.sum2[is.na(log10excess), log10excess:=0]
+
+a<-ggplot(perm.sum[test=="cline"&TT>0], 
+          aes(x=gwas.th, 
+              y=-1*clinal.th, 
+              fill=log10excess))+
+    geom_tile()+
+    scale_fill_viridis(option="viridis",limits=c(-.5, 3))+
+    labs(x="", 
+         y=expression("-log"[10]*"(clinal q)"), 
+         fill=expression("log"[10]*"(#)"))+
+    geom_point(data=perm.sum[test=="cline"&enrich.prop=="greater"], 
+               aes(x=gwas.th, y=-1*clinal.th), 
+               color="orange", 
+               fill="orange")+
+    theme(legend.position="bottom")+
+    theme(axis.text.x=element_blank())+
+    lims( y=c(0.7,5.1))
+
+b<-ggplot(perm.sum2[test=="cline"&TT>0], 
+          aes(x=gwas.th, 
+              y=-1*clinal.th, 
+              fill=log10excess))+
+    geom_tile()+
+    scale_fill_viridis(option="viridis",limits=c(-.5, 3))+
+    labs(x="", 
+         y="", 
+         fill=expression("log"[10]*"(#)"))+
+    geom_point(data=perm.sum2[test=="cline"&enrich.prop=="greater"], 
+               aes(x=gwas.th, y=-1*clinal.th), 
+               color="orange", 
+               fill="orange")+
+    theme(legend.position="bottom")+
+    theme(axis.text.x=element_blank())+
+    lims( y=c(0.7,5.1))
+
+
+c<-ggplot(perm.sum[test=="seasonal"&TT>0], 
+          aes(x=gwas.th, 
+              y=-1*seas.th, 
+              fill=log10excess))+
+    geom_tile()+
+    scale_fill_viridis(option="viridis",limits=c(-.5, 3))+
+    labs(x="", 
+         y=expression("-log"[10]*"(seasonal q)"), 
+         fill=expression("log"[10]*"(#)"))+
+    geom_point(data=perm.sum[test=="seasonal"&enrich.prop=="greater"], 
+               aes(x=gwas.th, y=-1*seas.th), 
+               color="orange", 
+               fill="orange")+
+    theme(legend.position="bottom")+
+    lims( y=c(0.7,5.1))+
+    scale_x_discrete(labels=c("FDR < 0.025", "FDR < 0.05", "FDR < 0.1", "FDR < 0.15", "FDR < 0.2"))+
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+
+d<-ggplot(perm.sum2[test=="seasonal"&TT>0], 
+          aes(x=gwas.th, 
+              y=-1*seas.th, 
+              fill=log10excess))+
+    geom_tile()+
+    scale_fill_viridis(option="viridis",limits=c(-.5, 3))+
+    labs(x="", 
+         y="", 
+         fill=expression("log"[10]*"(#)"))+
+    geom_point(data=perm.sum2[test=="seasonal"&enrich.prop=="greater"], 
+               aes(x=gwas.th, y=-1*seas.th), 
+               color="orange", 
+               fill="orange")+
+    theme(legend.position="bottom")+
+    lims( y=c(0.7,5.1))+
+    scale_x_discrete(labels=c("FDR < 0.025", "FDR < 0.05", "FDR < 0.1", "FDR < 0.15", "FDR < 0.2"))+
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+
+
+h<-get_legend(a)
+title <- ggdraw() + draw_label("Bergland 2014", fontface='bold')
+
+title2 <- ggdraw() + draw_label("Machado 2019", fontface='bold')
+
+left<-plot_grid(title, a+theme(legend.position="none"), c+theme(legend.position="none"), h, ncol=1, rel_heights=c(0.1, 0.4, 0.5, 0.1), labels=c("", "A", "B"), align="v")
+right<-plot_grid(title2,b +theme(legend.position="none"), d+theme(legend.position="none"), ggplot(), ncol=1, rel_heights=c(0.1, 0.4, 0.5, 0.1), align="v")
+
+pdf("/scratch/pae3g/FigureS15_excess.pdf", height=6, width=6)
+plot_grid(left, right, ncol=2, align="h")
+dev.off()
+
+
+
+
+
+###########################################
+### FIGURE S9  ############################
+###########################################
+
+library(data.table)
+library(cowplot)
+library(viridis)
+
+clump.enrich<-fread("/scratch/pae3g/evolution/index_snps_enrich_by_pop_seas2019.txt")
+
+clump.enrich[,prop.test:=TT/(TT+TF)]
+
+#summarize all permutations except 0, which is original ordering of data
+perm.sum<-clump.enrich[perm!=0, .(med.TT=median(TT, na.rm=T),
+                                  med.prop.test=median(prop.test, na.rm=T),
+                                  q.95.TT=quantile(TT, .95, na.rm=T),
+                                  q.95.prop=quantile(prop.test, .95, na.rm=T)),
+                       .( gwas.th, seas.th, test, pop)]
+
+#merge with actual data
+perm.sum<-merge(perm.sum, clump.enrich[perm==0], by=c( "gwas.th", "seas.th", "pop", "test"))
+
+#calculate enrichment scores
+perm.sum[,TT.enrich:=(TT-med.TT)/med.TT]
+perm.sum[,prop.enrich:=(prop.test-med.prop.test)/med.prop.test]
+
+perm.sum[prop.test>q.95.prop, enrich.prop:="greater"]
+perm.sum[,gwas.th:=as.factor(gwas.th)]
+
+ids=fread("/scratch/pae3g/evolution/core20pops.csv")
+perm.sum<-merge(perm.sum, ids, by="pop")
+
+perm.sum<-merge()
+#for clarity, set enrichment above 5 to 5
+perm.sum[,prop.enrich.adj:=prop.enrich]
+perm.sum[prop.enrich>5&prop.enrich<Inf, prop.enrich.adj:=5]
+
+pdf("/scratch/pae3g/enrich_bypop_supp.pdf", height=8, width=7)
+ggplot(perm.sum[!is.na(prop.enrich)], aes(x=as.factor(gwas.th), y=-1*seas.th, fill=prop.enrich.adj))+
+    geom_tile()+
+    scale_fill_viridis(option="viridis", limits=c(-1,5))+
+    geom_tile(data=perm.sum[prop.enrich==Inf], aes(x=as.factor(gwas.th), y=-1*seas.th), fill="grey85")+
+    geom_point(data=perm.sum[enrich.prop=="greater"], aes(x=as.factor(gwas.th), y=-1*seas.th), color="orange")+
+    labs(x="", y=expression("-log"[10]*"(seas q)"), fill="enrichment")+
+    scale_x_discrete(labels=c("FDR < 0.025", "FDR < 0.05", "FDR < 0.1", "FDR < 0.15", "FDR < 0.2"))+
+    theme(axis.text.x=element_text(angle=45, hjust=1))+
+    theme(legend.position="bottom")+
+    #lims(y=c(0.7,5))
+    facet_wrap(~full_name)
+dev.off()
+
+
+
+################################
+##### FIGURE S10 ###############
+################################
+
+library(data.table)
+library(foreach)
+library(cowplot)
+library(ggbeeswarm)
+
+c<-fread("/scratch/pae3g/evolution/index_snps_PRS_bypop_seas2019.txt")
+
+#switch signs of scores for switch populations
+c[pop%in%c("TKA_14", "BHM_14", "LMA_14", "rd_12"), sum.logit:=-1*sum.logit]
+c[,avg.logit:=sum.logit/n]
+c[,rank.avg.logit:=frank(avg.logit), .(top, pop)]
+
+c[perm==0&rank.avg.logit>91]
+c[perm==0&rank.avg.logit>96]
+
+pdf("/scratch/pae3g/FigureS17.pdf", height=4, width=6)
+ggplot(c[perm!=0&pop%in%c("LMA_14", "TKA_14", "AGA_14")], aes(x=as.factor(top), y=avg.logit))+
+    geom_quasirandom(method="smiley", color="grey80", size=0.5)+
+    geom_point(data=c[perm==0&pop%in%c("LMA_14", "TKA_14", "AGA_14")], aes(x=as.factor(top), y=avg.logit), color="lightseagreen", size=1)+
+    scale_x_discrete(labels=c("FDR < 0.025", "FDR < 0.05", "FDR < 0.1", "FDR < 0.15", "FDR < 0.2"))+
+    theme(axis.text.x=element_text(angle=45, hjust=1))+
+    labs(x="", y="seasonal polygenic score")+
+    facet_wrap(~pop)
+dev.off()
+
+
+##############################
+##### FIGURE S13 ##############
+##############################
+
+keep.paths<-fread( "/scratch/pae3g/evolution/all_reconstructed_haplotypes_melted.txt")
+prop.line<-keep.paths[, .(line.length=sum(path.length)),.(line, chromosome, swarm, generation)]
+prop.line[,proportion:=line.length/sum(as.numeric(line.length[chromosome==chromosome]))]
+
+#cacluate total length of each chromosome in each swarm and add to file
+for (chr in c("2L", "2R", "3L", "3R", "X")) {
+    for (cage in c("A", "B")){
+        for(gen in c(4,5)){
+            chr.total=sum(prop.line[chromosome==chr&swarm==cage&generation==gen, line.length], na.rm=TRUE)
+            prop.line[chromosome==chr&swarm==cage&generation==gen, percent:=line.length/chr.total]
+        }
+    }
+}
+
+
+#read in geography and reorder it as a factor
+
+geo<-fread("/scratch/pae3g/evolution/strain_geography.csv") #available in Table S2
+setnames(geo, "strain", "line")
+geo[,geography:=factor(geography, levels=c("Carribean", "Southeast", "DGRP", "PA-Fall", "PA-Spring", "Ithica", "Maine"))]
+prop.line<-merge(prop.line, geo, by="line")
+
+#order line names by geography
+sorted_lines<-geo[order(geography), line]
+prop.line[,line:=factor(line, levels=sorted_lines)]
+prop.line[,geography:=factor(geography, levels=c("Carribean", "Southeast", "DGRP", "PA-Fall", "PA-Spring", "Ithica", "Maine"))]
+
+#make factor for cage+ generation
+prop.line[,group.name:=paste("cage ",swarm, " gen. ", generation)]
+
+
+#plot with F4s and F5s mirrored above and below the axis
+
+pdf("/scratch/pae3g/prop_each_line.pdf", height=8, width=8)
+ggplot(prop.line[generation==4], aes(x=line, y=percent*100, fill=geography))+
+    geom_bar(stat="identity")+
+    geom_bar(data=prop.line[generation==5], aes(x=line, y=percent*-100, fill=geography), stat="identity")+
+    facet_grid(chromosome~swarm, scales="free_x")+
+    theme(axis.text.x=element_text(angle=45,hjust=1, size=8))+
+    labs(y="% of chromosome derived from founder line", fill="Founder origin")+
+    geom_hline(yintercept=1/34*100, color="grey", linetype="dashed")+
+    geom_hline(yintercept=0, color="black")+
+    geom_hline(yintercept=-1/34*100, color="grey", linetype="dashed")+
+    scale_fill_discrete(labels=c("Carribean", "Southeast", "North Carolina", "Penn-Fall", "Penn-Spring", "New York", "Maine"))
+
+dev.off()
+
 #################################
-### FIGURE S5 ###################
+### FIGURE S14 ###################
 #################################
 
 
@@ -1457,7 +1860,7 @@ ks.test(sim.rec.merge2.r[gen==5,R], sim.r[gen==5, R])#P< .33 D=.02
 
 
 ######################
-### FIGURE S6 ########  
+### FIGURE S15 ########  
 ######################
 
 
@@ -1487,60 +1890,10 @@ dev.off()
 
 
 
-##############################
-##### FIGURE S7 ##############
-##############################
-
-keep.paths<-fread( "/scratch/pae3g/evolution/all_reconstructed_haplotypes_melted.txt")
-prop.line<-keep.paths[, .(line.length=sum(path.length)),.(line, chromosome, swarm, generation)]
-prop.line[,proportion:=line.length/sum(as.numeric(line.length[chromosome==chromosome]))]
-
-#cacluate total length of each chromosome in each swarm and add to file
-for (chr in c("2L", "2R", "3L", "3R", "X")) {
-    for (cage in c("A", "B")){
-        for(gen in c(4,5)){
-        chr.total=sum(prop.line[chromosome==chr&swarm==cage&generation==gen, line.length], na.rm=TRUE)
-        prop.line[chromosome==chr&swarm==cage&generation==gen, percent:=line.length/chr.total]
-    }
-    }
-}
-
-
-#read in geography and reorder it as a factor
-
-geo<-fread("/scratch/pae3g/evolution/strain_geography.csv") #available in Table S2
-setnames(geo, "strain", "line")
-geo[,geography:=factor(geography, levels=c("Carribean", "Southeast", "DGRP", "PA-Fall", "PA-Spring", "Ithica", "Maine"))]
-prop.line<-merge(prop.line, geo, by="line")
-
-#order line names by geography
-sorted_lines<-geo[order(geography), line]
-prop.line[,line:=factor(line, levels=sorted_lines)]
-prop.line[,geography:=factor(geography, levels=c("Carribean", "Southeast", "DGRP", "PA-Fall", "PA-Spring", "Ithica", "Maine"))]
-
-#make factor for cage+ generation
-prop.line[,group.name:=paste("cage ",swarm, " gen. ", generation)]
-
-
-#plot with F4s and F5s mirrored above and below the axis
-
-pdf("/scratch/pae3g/prop_each_line.pdf", height=8, width=8)
-ggplot(prop.line[generation==4], aes(x=line, y=percent*100, fill=geography))+
-    geom_bar(stat="identity")+
-    geom_bar(data=prop.line[generation==5], aes(x=line, y=percent*-100, fill=geography), stat="identity")+
-    facet_grid(chromosome~swarm, scales="free_x")+
-    theme(axis.text.x=element_text(angle=45,hjust=1, size=8))+
-    labs(y="% of chromosome derived from founder line", fill="Founder origin")+
-    geom_hline(yintercept=1/34*100, color="grey", linetype="dashed")+
-    geom_hline(yintercept=0, color="black")+
-    geom_hline(yintercept=-1/34*100, color="grey", linetype="dashed")+
-    scale_fill_discrete(labels=c("Carribean", "Southeast", "North Carolina", "Penn-Fall", "Penn-Spring", "New York", "Maine"))
-
-dev.off()
 
 
 ######################################
-### FIGURE S8 ########################
+### FIGURE S16 ########################
 ######################################
 
 library(data.table)
@@ -1575,7 +1928,7 @@ dev.off()
 
 
 ########################
-##### FIGURE S9 ########
+##### FIGURE S17 ########
 ########################
 
 library(GWASTools)
@@ -1633,7 +1986,7 @@ sample.order<-unique(a.melt[order(value)][order(swarm)]$id)
 a.melt[,id:=factor(a.melt$id, levels=sample.order)]
 a.melt[,Var2:=factor(a.melt$Var2, levels=sample.order)]
 
-pdf("/scratch/pae3g/IBS_GRM.pdf", height=8, width=8)
+tiff("/scratch/pae3g/IBS_GRM.tif", height=6, width=6, units="in", res=300, compression = "lzw")
 ggplot(a.melt, aes(x=id, y=Var2, fill=value))+
     geom_tile()+
     scale_fill_viridis(option="viridis")+ 
@@ -1646,7 +1999,7 @@ ggplot(a.melt, aes(x=id, y=Var2, fill=value))+
 dev.off()
 
 ################################################
-############# FIGURE S10 #######################
+############# FIGURE S18 #######################
 ################################################
 
 library(data.table)
@@ -1669,156 +2022,8 @@ plot_grid(gd, gp, ep, ge, ncol=1, labels=c("A", "B", "C", "D"), rel_heights = c(
 dev.off()
 
 
-###################################
-########## FIGURE S11 #############
-###################################
-
-#continues from data table produced in Figure 3
-p2L<-ggplot(y[perm!=0], aes(x=l.2L))+geom_histogram(binwidth=0.05, fill="grey85")+geom_vline(xintercept=y[perm==0,l.2L], color="lightseagreen", size=2)+labs(x="λ GC", title="Chr. 2L")+scale_x_continuous(limits=c(.5, 2.5), breaks=c(0.5,1, 1.5, 2,2.5))
-p2R<-ggplot(y[perm!=0], aes(x=l.2R))+geom_histogram(binwidth=0.05, fill="grey85")+geom_vline(xintercept=y[perm==0,l.2R], color="lightseagreen", size=2)+labs(x="λ GC", title="Chr. 2R")+scale_x_continuous(limits=c(.5, 2.5), breaks=c(0.5,1, 1.5, 2,2.5))
-p3L<-ggplot(y[perm!=0], aes(x=l.3L))+geom_histogram(binwidth=0.05, fill="grey85")+geom_vline(xintercept=y[perm==0,l.3L], color="lightseagreen", size=2)+labs(x="λ GC", title="Chr. 3L")+scale_x_continuous(limits=c(.5, 2.5), breaks=c(0.5,1, 1.5, 2,2.5))
-p3R<-ggplot(y[perm!=0], aes(x=l.3R))+geom_histogram(binwidth=0.05, fill="grey85")+geom_vline(xintercept=y[perm==0,l.3R], color="lightseagreen", size=2)+labs(x="λ GC", title="Chr. 3R")+scale_x_continuous(limits=c(.5, 2.5), breaks=c(0.5,1, 1.5, 2,2.5))
-pX<-ggplot(y[perm!=0], aes(x=l.X))+geom_histogram(binwidth=0.05, fill="grey85")+geom_vline(xintercept=y[perm==0,l.X], color="lightseagreen", size=2)+labs(x="λ GC", title="Chr. X")+scale_x_continuous(limits=c(.5, 2.5), breaks=c(0.5,1, 1.5, 2,2.5))
-
-
-
-pdf("/scratch/pae3g/Figure_S12.pdf", height=2.5, width=12)
-plot_grid(p2L, p2R, p3L, p3R, pX, nrow=1)
-dev.off()
-
-
-
-
-#########################
-## FIGURE S12 ##########
-#########################
-
-library(data.table)
-library(SNPRelate)
-library(cowplot)
-
-tim.geno<-fread("/scratch/pae3g/tim_genotypes.csv")
-
-phenos<-fread("/nv/vol186/bergland-lab/Priscilla/phenos_062018.txt")
-phenos[photoperiod==9, pp:="9L:15D"]
-phenos[photoperiod==11, pp:="11L:13D"]
-phenos[photoperiod==13, pp:="13L:11D"]
-phenos[photoperiod==15, pp:="15L:9D"]
-phenos[,pp:=factor(phenos$pp, levels=c("9L:15D", "11L:13D", "13L:11D", "15L:9D"))]
-tim.genos<-merge(phenos, tim.geno, by="id")
-
-
-#open up hybrid file to pull cpo genotypes
-geno<-snpgdsOpen("/scratch/pae3g/genome-reconstruction/final3.vcf.gds")
-
-snp.dt <- data.table(snp.id=read.gdsn(index.gdsn(geno, "snp.id")),
-                     chr=read.gdsn(index.gdsn(geno, "snp.chromosome")),
-                     pos=read.gdsn(index.gdsn(geno, "snp.position")),
-                     alleles=read.gdsn(index.gdsn(geno, "snp.allele")))
-
-snp.dt[pos==13793588] #snp.id==2313328 #alleles =T/A
-y<-snpgdsGetGeno(geno, snp.id="2313328", with.id=T)
-
-cpo<-data.table("cpo.geno"=y$genotype[,1],
-                sample.id=y$sample.id)
-
-cpo<-merge(cpo, phenos, by="sample.id")
-
-
-binomial_smooth <- function(...) {
-    geom_smooth(method = "glm", method.args = list(family = "binomial"), se=FALSE)
-}
-
-left.top<-top<-ggplot(data=tim.genos[!is.na(final.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(final.geno)))+geom_jitter(data=tim.genos[!is.na(final.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(final.geno)), height = 0.1)+labs(x="Temperature °C", y="Diapause", color="tim genotype")+binomial_smooth()+scale_y_continuous(breaks=c(0,1))+scale_color_discrete(labels=c("s-tim/s-tim", "s-tim/ls-tim", "ls-tim/ls-tim"))
-
-left.bottom<-ggplot(data=cpo[!is.na(cpo.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(cpo.geno)))+geom_jitter(data=cpo[!is.na(cpo.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(cpo.geno)), height = 0.1)+labs(x="Temperature °C", y="Diapause", color="cpo genotype")+binomial_smooth()+scale_y_continuous(breaks=c(0,1))+scale_color_discrete(labels=c("A/A", "A/T", "T/T"))
-
-
-top<-ggplot(data=tim.genos[!is.na(final.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(final.geno)))+geom_jitter(data=tim.genos[!is.na(final.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(final.geno)), height = 0.1)+labs(x="Temperature °C", y="Diapause", color="tim genotype")+binomial_smooth()+scale_y_continuous(breaks=c(0,1))+facet_grid(.~pp)+scale_color_discrete(labels=c("s-tim/s-tim", "s-tim/ls-tim", "ls-tim/ls-tim"))
-
-
-bottom<-ggplot(data=cpo[!is.na(cpo.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(cpo.geno)))+geom_jitter(data=cpo[!is.na(cpo.geno)], aes(x=temp.rack.cal, y=diapause.bin9, color=as.factor(cpo.geno)), height = 0.1)+labs(x="Temperature °C", y="Diapause", color="cpo genotype")+binomial_smooth()+scale_y_continuous(breaks=c(0,1))+facet_grid(.~pp)+scale_color_discrete(labels=c("A/A", "A/T", "T/T"))
-
-top.legend<-get_legend(left.top)
-bottom.legend<-get_legend(left.bottom)
-top.row<-plot_grid(left.top+theme(legend.position="none"),
-                   top+theme(legend.position="none"),
-                   top.legend,
-                   labels=c("A", "B", ""),
-                   rel_widths=c(.25, .6, .15),
-                   nrow=1 )
-
-
-bottom.row<-plot_grid(left.bottom+theme(legend.position="none"),
-                   bottom+theme(legend.position="none"),
-                   bottom.legend,
-                   labels=c("C", "D", ""),
-                   rel_widths=c(.25, .6, .15),
-                   nrow=1 )
-
-pdf("/scratch/pae3g/cpo_tim.pdf", height=6, width=10)
-plot_grid(top.row, bottom.row, nrow=2)
-dev.off()
-
-
-#stats for figure legend
-summary(glm(diapause.bin9~final.geno+temp.rack.cal+photoperiod+swarm.y+generation, data=tim.genos, family=binomial))
-summary(glm(diapause.bin9~final.geno+temp.rack.cal+swarm.y+generation, data=tim.genos[photoperiod==9], family=binomial))
-summary(glm(diapause.bin9~final.geno+temp.rack.cal+swarm.y+generation, data=tim.genos[photoperiod==11], family=binomial))
-summary(glm(diapause.bin9~final.geno+temp.rack.cal+swarm.y+generation, data=tim.genos[photoperiod==13], family=binomial))
-summary(glm(diapause.bin9~final.geno+temp.rack.cal+swarm.y+generation, data=tim.genos[photoperiod==15], family=binomial))
-
-summary(glm(diapause.bin9~cpo.geno+temp.rack.cal+photoperiod+swarm+generation, data=cpo, family=binomial))
-summary(glm(diapause.bin9~cpo.geno+temp.rack.cal+swarm+generation, data=cpo[photoperiod==9], family=binomial))
-summary(glm(diapause.bin9~cpo.geno+temp.rack.cal+swarm+generation, data=cpo[photoperiod==11], family=binomial))
-summary(glm(diapause.bin9~cpo.geno+temp.rack.cal+swarm+generation, data=cpo[photoperiod==13], family=binomial))
-summary(glm(diapause.bin9~cpo.geno+temp.rack.cal+swarm+generation, data=cpo[photoperiod==15], family=binomial))
-
-
-
-#############################
-### FIGURE S13 ##############
-#############################
-
-
-library(data.table)
-library(foreach)
-library(cowplot)
-library(viridis)
-library(SNPRelate)
-geno <- snpgdsOpen("/scratch/pae3g/genome-reconstruction/final2_draw1_replaced.vcf.gds", allow.fork=T)
-a<-snpgdsSNPList(gdsobj=geno)
-
-info<-data.table(snp.id=a$snp.id,
-                 chr=a$chromosome,
-                 pos=a$pos)
-
-perm.snps<-foreach(perm=c(0,101:119), .errorhandling="remove")%do%{
-    print(perm)
-    gwas<-fread(paste0("/scratch/pae3g/evolution/gwas_p_score_inv_id_perm", perm, ".txt"))
-    gwas<-merge(gwas, info, by=c("chr", "pos"))
-    snps<-(gwas[order(gwas.p)][1:101,snp.id])
-    ld<-snpgdsLDMat(geno, slide=-1,verbose=F,snp.id =snps , method='composite')$LD
-    m<-data.table(melt(ld))
-    m[,perm:=perm]
-    return(m)
-}
-
-perm.snps<-rbindlist(perm.snps)
-
-pdf("/scratch/pae3g/Figure_S13.pdf", height=7, width=8)
-ggplot(perm.snps, aes(x=Var1, y=Var2, fill=value*value))+
-    geom_tile()+
-    scale_fill_viridis(option="viridis")+ 
-    theme(line = element_blank(),
-          axis.text = element_blank(),
-          axis.title = element_blank())+
-    labs( fill=expression("R"^2))+
-    facet_wrap(~perm, scales="free")
-dev.off()
-
 ################################################
-########### FIGURE S14 #########################
+########### FIGURE S19 #########################
 ################################################
 
 
@@ -1840,188 +2045,4 @@ dev.off()
 
 
 
-##########################
-#### FIGURE S15 ##########
-##########################
 
-#continues from code to make Figure 5!
-
-perm.sum[,excess:=TT-med.TT]
-perm.sum2[,excess:=TT-med.TT]
-
-#deal with 0s in excess
-perm.sum[,log10excess:=sign(excess)*log10(abs(excess))]
-perm.sum2[,log10excess:=sign(excess)*log10(abs(excess))]
-
-perm.sum[is.na(log10excess), log10excess:=0]
-perm.sum2[is.na(log10excess), log10excess:=0]
-
-a<-ggplot(perm.sum[test=="cline"&TT>0], 
-          aes(x=gwas.th, 
-              y=-1*clinal.th, 
-              fill=log10excess))+
-    geom_tile()+
-    scale_fill_viridis(option="viridis",limits=c(-.5, 3))+
-    labs(x="", 
-         y=expression("-log"[10]*"(clinal q)"), 
-         fill=expression("log"[10]*"(#)"))+
-    geom_point(data=perm.sum[test=="cline"&enrich.prop=="greater"], 
-               aes(x=gwas.th, y=-1*clinal.th), 
-               color="orange", 
-               fill="orange")+
-    theme(legend.position="bottom")+
-    theme(axis.text.x=element_blank())+
-    lims( y=c(0.7,5.1))
-
-b<-ggplot(perm.sum2[test=="cline"&TT>0], 
-          aes(x=gwas.th, 
-              y=-1*clinal.th, 
-              fill=log10excess))+
-    geom_tile()+
-    scale_fill_viridis(option="viridis",limits=c(-.5, 3))+
-    labs(x="", 
-         y="", 
-         fill=expression("log"[10]*"(#)"))+
-    geom_point(data=perm.sum2[test=="cline"&enrich.prop=="greater"], 
-               aes(x=gwas.th, y=-1*clinal.th), 
-               color="orange", 
-               fill="orange")+
-    theme(legend.position="bottom")+
-    theme(axis.text.x=element_blank())+
-    lims( y=c(0.7,5.1))
-
-
-c<-ggplot(perm.sum[test=="seasonal"&TT>0], 
-          aes(x=gwas.th, 
-              y=-1*seas.th, 
-              fill=log10excess))+
-    geom_tile()+
-    scale_fill_viridis(option="viridis",limits=c(-.5, 3))+
-    labs(x="", 
-         y=expression("-log"[10]*"(seasonal q)"), 
-         fill=expression("log"[10]*"(#)"))+
-    geom_point(data=perm.sum[test=="seasonal"&enrich.prop=="greater"], 
-               aes(x=gwas.th, y=-1*seas.th), 
-               color="orange", 
-               fill="orange")+
-    theme(legend.position="bottom")+
-    lims( y=c(0.7,5.1))+
-    scale_x_discrete(labels=c("FDR < 0.025", "FDR < 0.05", "FDR < 0.1", "FDR < 0.15", "FDR < 0.2"))+
-    theme(axis.text.x=element_text(angle=45, hjust=1))
-
-
-d<-ggplot(perm.sum2[test=="seasonal"&TT>0], 
-          aes(x=gwas.th, 
-              y=-1*seas.th, 
-              fill=log10excess))+
-    geom_tile()+
-    scale_fill_viridis(option="viridis",limits=c(-.5, 3))+
-    labs(x="", 
-         y="", 
-         fill=expression("log"[10]*"(#)"))+
-    geom_point(data=perm.sum2[test=="seasonal"&enrich.prop=="greater"], 
-               aes(x=gwas.th, y=-1*seas.th), 
-               color="orange", 
-               fill="orange")+
-    theme(legend.position="bottom")+
-    lims( y=c(0.7,5.1))+
-    scale_x_discrete(labels=c("FDR < 0.025", "FDR < 0.05", "FDR < 0.1", "FDR < 0.15", "FDR < 0.2"))+
-    theme(axis.text.x=element_text(angle=45, hjust=1))
-
-
-
-h<-get_legend(a)
-title <- ggdraw() + draw_label("Bergland 2014", fontface='bold')
-
-title2 <- ggdraw() + draw_label("Machado 2019", fontface='bold')
-
-left<-plot_grid(title, a+theme(legend.position="none"), c+theme(legend.position="none"), h, ncol=1, rel_heights=c(0.1, 0.4, 0.5, 0.1), labels=c("", "A", "B"), align="v")
-right<-plot_grid(title2,b +theme(legend.position="none"), d+theme(legend.position="none"), ggplot(), ncol=1, rel_heights=c(0.1, 0.4, 0.5, 0.1), align="v")
-
-pdf("/scratch/pae3g/FigureS15_excess.pdf", height=6, width=6)
-plot_grid(left, right, ncol=2, align="h")
-dev.off()
-
-
-
-###########################################
-### FIGURE S16#############################
-###########################################
-
-library(data.table)
-library(cowplot)
-library(viridis)
-
-clump.enrich<-fread("/scratch/pae3g/evolution/index_snps_enrich_by_pop_seas2019.txt")
-
-clump.enrich[,prop.test:=TT/(TT+TF)]
-
-#summarize all permutations except 0, which is original ordering of data
-perm.sum<-clump.enrich[perm!=0, .(med.TT=median(TT, na.rm=T),
-                                  med.prop.test=median(prop.test, na.rm=T),
-                                  q.95.TT=quantile(TT, .95, na.rm=T),
-                                  q.95.prop=quantile(prop.test, .95, na.rm=T)),
-                       .( gwas.th, seas.th, test, pop)]
-
-#merge with actual data
-perm.sum<-merge(perm.sum, clump.enrich[perm==0], by=c( "gwas.th", "seas.th", "pop", "test"))
-
-#calculate enrichment scores
-perm.sum[,TT.enrich:=(TT-med.TT)/med.TT]
-perm.sum[,prop.enrich:=(prop.test-med.prop.test)/med.prop.test]
-
-perm.sum[prop.test>q.95.prop, enrich.prop:="greater"]
-perm.sum[,gwas.th:=as.factor(gwas.th)]
-
-ids=fread("/scratch/pae3g/evolution/core20pops.csv")
-perm.sum<-merge(perm.sum, ids, by="pop")
-
-perm.sum<-merge()
-#for clarity, set enrichment above 5 to 5
-perm.sum[,prop.enrich.adj:=prop.enrich]
-perm.sum[prop.enrich>5&prop.enrich<Inf, prop.enrich.adj:=5]
-
-pdf("/scratch/pae3g/enrich_bypop_supp.pdf", height=8, width=7)
-ggplot(perm.sum[!is.na(prop.enrich)], aes(x=as.factor(gwas.th), y=-1*seas.th, fill=prop.enrich.adj))+
-    geom_tile()+
-    scale_fill_viridis(option="viridis", limits=c(-1,5))+
-    geom_tile(data=perm.sum[prop.enrich==Inf], aes(x=as.factor(gwas.th), y=-1*seas.th), fill="grey85")+
-    geom_point(data=perm.sum[enrich.prop=="greater"], aes(x=as.factor(gwas.th), y=-1*seas.th), color="orange")+
-    labs(x="", y=expression("-log"[10]*"(seas q)"), fill="enrichment")+
-    scale_x_discrete(labels=c("FDR < 0.025", "FDR < 0.05", "FDR < 0.1", "FDR < 0.15", "FDR < 0.2"))+
-    theme(axis.text.x=element_text(angle=45, hjust=1))+
-    theme(legend.position="bottom")+
-    #lims(y=c(0.7,5))
-    facet_wrap(~full_name)
-dev.off()
-
-
-
-################################
-##### FIGURE S17 ###############
-################################
-
-library(data.table)
-library(foreach)
-library(cowplot)
-library(ggbeeswarm)
-
-c<-fread("/scratch/pae3g/evolution/index_snps_PRS_bypop_seas2019.txt")
-
-#switch signs of scores for switch populations
-c[pop%in%c("TKA_14", "BHM_14", "LMA_14", "rd_12"), sum.logit:=-1*sum.logit]
-c[,avg.logit:=sum.logit/n]
-c[,rank.avg.logit:=frank(avg.logit), .(top, pop)]
-
-c[perm==0&rank.avg.logit>91]
-c[perm==0&rank.avg.logit>96]
-
-pdf("/scratch/pae3g/FigureS17.pdf", height=4, width=6)
-ggplot(c[perm!=0&pop%in%c("LMA_14", "TKA_14", "AGA_14")], aes(x=as.factor(top), y=avg.logit))+
-    geom_quasirandom(method="smiley", color="grey80", size=0.5)+
-    geom_point(data=c[perm==0&pop%in%c("LMA_14", "TKA_14", "AGA_14")], aes(x=as.factor(top), y=avg.logit), color="lightseagreen", size=1)+
-    scale_x_discrete(labels=c("FDR < 0.025", "FDR < 0.05", "FDR < 0.1", "FDR < 0.15", "FDR < 0.2"))+
-    theme(axis.text.x=element_text(angle=45, hjust=1))+
-    labs(x="", y="seasonal polygenic score")+
-    facet_wrap(~pop)
-dev.off()
