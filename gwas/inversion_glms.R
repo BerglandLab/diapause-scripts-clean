@@ -2,8 +2,8 @@ library(data.table)
 library(cowplot)
 
 #read in phenotypes and inversion calls based on Kapun 2013
-phenos <- fread("/scratch/pae3g/phenos/phenos_062018.txt")
-kary.ag<-fread("/scratch/pae3g/evolution/final3.vcf.karytypecalls.csv", header=T)
+phenos <- fread("/nv/vol186/bergland-lab/Priscilla/phenos_wolbachia.txt")
+load("/scratch/pae3g/revisions/parents_hybrids_karyotype_calls.Rdata")
 
 phenos<-merge(kary.ag, phenos, by="sample.id")
 
@@ -31,12 +31,48 @@ phenos[chr2L=="In(2L)t", t:=2]
 phenos[chr2L=="chr2Lstd;In(2L)t", t:=1]
 
 #test individual inversions
-summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+Mo, data=phenos, family="binomial"))
-summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+C, data=phenos, family="binomial"))
-summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+Payne, data=phenos[Payne!=2], family="binomial"))
-summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+t, data=phenos, family="binomial"))
-summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+Ns, data=phenos, family="binomial"))
-#all chr3R genos together
-summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+chr3R, data=phenos, family="binomial"))
 
-
+tableS3<-data.table(chromosome=c("3R", "3R", "3R", "2L", "2R"),
+                    inversion=c("Mo", "C", "Payne", "t", "Ns"),
+                   
+                    
+                    stage_8_both=c(summary(glm(diapause.bin~temp.rack.cal+photoperiod+swarm+generation+wolbachia+Mo, data=phenos, family="binomial"))$coefficients["Mo", "Pr(>|z|)"],
+                                   summary(glm(diapause.bin~temp.rack.cal+photoperiod+swarm+generation+wolbachia+C, data=phenos, family="binomial"))$coefficients["C", "Pr(>|z|)"],
+                                   summary(glm(diapause.bin~temp.rack.cal+photoperiod+swarm+generation+wolbachia+Payne, data=phenos[Payne!=2], family="binomial"))$coefficients["Payne", "Pr(>|z|)"],
+                                   summary(glm(diapause.bin~temp.rack.cal+photoperiod+swarm+generation+wolbachia+t, data=phenos, family="binomial"))$coefficients["t", "Pr(>|z|)"],
+                                   summary(glm(diapause.bin~temp.rack.cal+photoperiod+swarm+generation+wolbachia+Ns, data=phenos, family="binomial"))$coefficients["Ns", "Pr(>|z|)"]),
+                    
+                    stage_10_both=c(summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+wolbachia+Mo, data=phenos, family="binomial"))$coefficients["Mo", "Pr(>|z|)"],
+                                    summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+wolbachia+C, data=phenos, family="binomial"))$coefficients["C", "Pr(>|z|)"],
+                                    summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+wolbachia+Payne, data=phenos[Payne!=2], family="binomial"))$coefficients["Payne", "Pr(>|z|)"],
+                                    summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+wolbachia+t, data=phenos, family="binomial"))$coefficients["t", "Pr(>|z|)"],
+                                    summary(glm(diapause.bin9~temp.rack.cal+photoperiod+swarm+generation+wolbachia+Ns, data=phenos, family="binomial"))$coefficients["Ns", "Pr(>|z|)"]),
+                    
+                    
+                    stage_8_A=c(summary(glm(diapause.bin~temp.rack.cal+photoperiod+generation+wolbachia+Mo, data=phenos[swarm=="A"], family="binomial"))$coefficients["Mo", "Pr(>|z|)"],
+                                summary(glm(diapause.bin~temp.rack.cal+photoperiod+generation+wolbachia+C, data=phenos[swarm=="A"], family="binomial"))$coefficients["C", "Pr(>|z|)"],
+                                summary(glm(diapause.bin~temp.rack.cal+photoperiod+generation+wolbachia+Payne, data=phenos[Payne!=2][swarm=="A"], family="binomial"))$coefficients["Payne", "Pr(>|z|)"],
+                                summary(glm(diapause.bin~temp.rack.cal+photoperiod+generation+wolbachia+t, data=phenos[swarm=="A"], family="binomial"))$coefficients["t", "Pr(>|z|)"],
+                                summary(glm(diapause.bin~temp.rack.cal+photoperiod+generation+wolbachia+Ns, data=phenos[swarm=="A"], family="binomial"))$coefficients["Ns", "Pr(>|z|)"]),
+                    
+                    
+                    stage_10_A=c(summary(glm(diapause.bin9~temp.rack.cal+photoperiod+generation+wolbachia+Mo, data=phenos[swarm=="A"], family="binomial"))$coefficients["Mo", "Pr(>|z|)"],
+                                 summary(glm(diapause.bin9~temp.rack.cal+photoperiod+generation+wolbachia+C, data=phenos[swarm=="A"], family="binomial"))$coefficients["C", "Pr(>|z|)"],
+                                 summary(glm(diapause.bin9~temp.rack.cal+photoperiod+generation+wolbachia+Payne, data=phenos[Payne!=2][swarm=="A"], family="binomial"))$coefficients["Payne", "Pr(>|z|)"],
+                                 summary(glm(diapause.bin9~temp.rack.cal+photoperiod+generation+wolbachia+t, data=phenos[swarm=="A"], family="binomial"))$coefficients["t", "Pr(>|z|)"],
+                                 summary(glm(diapause.bin9~temp.rack.cal+photoperiod+generation+wolbachia+Ns, data=phenos[swarm=="A"], family="binomial"))$coefficients["Ns", "Pr(>|z|)"]),
+                   
+                    
+                    stage_8_B=c(summary(glm(diapause.bin~temp.rack.cal+photoperiod+generation+wolbachia+Mo, data=phenos[swarm=="B"], family="binomial"))$coefficients["Mo", "Pr(>|z|)"],
+                                NA,
+                                summary(glm(diapause.bin~temp.rack.cal+photoperiod+generation+wolbachia+Payne, data=phenos[Payne!=2][swarm=="B"], family="binomial"))$coefficients["Payne", "Pr(>|z|)"],
+                                summary(glm(diapause.bin~temp.rack.cal+photoperiod+generation+wolbachia+t, data=phenos[swarm=="B"], family="binomial"))$coefficients["t", "Pr(>|z|)"],
+                                NA),
+                    
+                    stage_10_B=c(summary(glm(diapause.bin9~temp.rack.cal+photoperiod+generation+wolbachia+Mo, data=phenos[swarm=="B"], family="binomial"))$coefficients["Mo", "Pr(>|z|)"],
+                                 NA,
+                                 summary(glm(diapause.bin9~temp.rack.cal+photoperiod+generation+wolbachia+Payne, data=phenos[Payne!=2][swarm=="B"], family="binomial"))$coefficients["Payne", "Pr(>|z|)"],
+                                 summary(glm(diapause.bin9~temp.rack.cal+photoperiod+generation+wolbachia+t, data=phenos[swarm=="B"], family="binomial"))$coefficients["t", "Pr(>|z|)"],
+                                NA))
+                    
+write.csv(tableS3, "/scratch/pae3g/revisions/figures/tables3.csv")

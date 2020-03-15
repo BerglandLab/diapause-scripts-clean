@@ -14,4 +14,10 @@ This folder contains the scripts used to go from mapped reads of hybrid individu
 
 * determine\_bad\_paths.R takes all reconstructed haplotypes and determines incorrect haplotypes that are shorter than expected (<1 Mb)
 * process\_vcfs.R takes the individual hybrid vcf files and turns it into a single vcf with suspicious haplotypes masked as missing. A genotype is randomly chosen when parents have heterozyous genotypes
-* replace\_missing\_data.vcf imputes all missing data based on predicted hardy weinberg frequencies
+* replace\_missing\_data.vcf imputes all missing data 100 times based on predicted hardy weinberg frequencies
+
+
+## Misc
+* singletons.R analyzes the results of a vcftools analysis that identified all singleton SNPs in teh ybrid VCF file
+
+* make\_parent\_VCF.sh combines the two individual parent vcfs into a single vcf

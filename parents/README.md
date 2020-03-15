@@ -9,9 +9,9 @@ vcf with more variants used for association mapping.
 
 ## Download and process existing parental sequence reads
 
-* Use sraData.delim and download\_sraData.sh to download appropriate
+* Use sraData.delim and "download\_sraData.sh" to download appropriate
 sequence files.
-* Use map\_sra2.sh to map and clean up the
+* Use "map\_sra2.sh" to map and clean up the
 reads.
 
 ##  map parental reads sequenced here
@@ -23,6 +23,11 @@ reads.
 
 ## genotype parents
 
-* haplotype\_caller\_workflow.sh has all commands for executing calling haplotypes and making VCFs in GATK. This script uses haplotype\_caller\_rivanna.sh and submit\_haplotype\_caller.slurm
-* filter\_parents.R does additional filtering of SNPs on missing parental snp information
+* "haplotype\_caller\_workflow.sh" has all commands for executing calling haplotypes and making VCFs in GATK. This script uses "haplotype\_caller\_rivanna.sh" and "submit\_haplotype\_caller.slurm"
+* "filter\_parents.R" does additional filtering of SNPs on missing parental snp information
 *
+
+## analyze genetic diversity in parents relative to hybrids
+
+* "parent\_pca.R" analyzes principle components of the parental populations divided by season and geography
+* "PCA\_karyotypes\_with\_parents.R" infers major cosomopolitan inversion karyotypes of parents and hybrids and calculates principle components for the combined dataset

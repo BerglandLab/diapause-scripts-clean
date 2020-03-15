@@ -10,25 +10,45 @@ library(lattice)
 library(tidyr)
 library(SeqArray)
 library(stringr)
+library(doMC)
+registerDoMC(20)
+
+#first, get a set of informative snps from parents
+#make gds of full parental genotype file 
+
+#snpgdsVCF2GDS("/mnt/pricey_2/priscilla/hybrid/hc/hs.hc.snp.99.9.both.linenames.vcf",  "/mnt/sammas_storage/bergland-lab/Priscilla/hs.hc.snp.99.9.both.linenames.vcf.gds", method="biallelic.only")
+
+#make a new gds of final hybrid swarm
+#snpgdsVCF2GDS("/scratch/pae3g/oldscratch_recovered/genome-reconstruction/final2.vcf", "/scratch/pae3g/revisions/final2.remade.vcf.gds", method="biallelic.only")
+
+#try merging
+#snpgdsCombineGeno(gds.fn = c("/nv/vol186/bergland-lab/Priscilla/hs.hc.snp.99.9.both.linenames.vcf.gds", "/scratch/pae3g/revisions/final2.remade.vcf.gds"), out.fn = "/scratch/pae3g/revisions/hybrid_parent_allsnp_merge.vcf.gds", same.strand = T)
 
 
-genofile <- snpgdsOpen("/scratch/pae3g/genome-reconstruction/final3.vcf.gds")
+genofile <- snpgdsOpen("/scratch/pae3g/revisions/hybrid_parent_allsnp_merge.vcf.gds" , allow.fork=T)
 
- snpset <- snpgdsLDpruning(genofile,
-                           ld.threshold=0.2,
-                           slide.max.bp = 5000,
-                           autosome.only=FALSE,
-                           maf=.05)
+#get informative
+snpset <- snpgdsLDpruning(genofile,
+                          ld.threshold=0.2,
+                          slide.max.bp = 5000,
+                          autosome.only=FALSE,
+                          maf=.05)
 
- snpset.id <-unlist(snpset)
+snpset.id <-unlist(snpset)
 
-metadata=fread("/scratch/pae3g/final_reconstruction/PAE_AOB_library_metadata_all.txt", header=FALSE)
+a<-snpgdsSNPList(genofile)
+info<-data.table(snp.id=a$snp.id,
+                 chr=a$chromosome,
+                 pos=a$pos,
+                 freq=a$afreq)
 
-setnames(metadata, c("sample.id", "generation", "library", "actual.cage"))
+snpset <- snpgdsLDpruning(geno,
+                          ld.threshold=0.2,
+                          slide.max.bp = 5000,
+                          autosome.only=FALSE,
+                          maf=.05)
 
- maf <- 0.05
- missing.rate <- 0.15
- threads <- 10
+snpset.id <-unlist(snpset)
 
  #empty list to save PCs
  pcaVars=list()
@@ -39,7 +59,7 @@ setnames(metadata, c("sample.id", "generation", "library", "actual.cage"))
      if(i=="all") snpset.id.use <- snpset.id
      if(i!="all") snpset.id.use <- unlist(snpset[which(names(snpset)==i)])
      print(length(snpset.id.use))
-     pca.temp <- snpgdsPCA(genofile, snp.id=snpset.id.use, autosome.only=FALSE, num.thread=threads)
+     pca.temp <- snpgdsPCA(genofile ,snp.id=snpset.id.use, autosome.only=FALSE, num.thread=10)
      pcaVars[[i]]=pca.temp$varprop
      #snpgdsPCASNPLoading(pca.temp, genofile)
 
@@ -59,12 +79,25 @@ setnames(metadata, c("sample.id", "generation", "library", "actual.cage"))
      pca.dt
  }
  pcaOut <- rbindlist(pcaOut)
+ 
+ metadata=fread("/scratch/pae3g/oldscratch_recovered/final_reconstruction/PAE_AOB_library_metadata_all.txt", header=FALSE)
+ 
+ setnames(metadata, c("sample.id", "generation", "library", "actual.cage"))
+ 
+ pcaOut2=merge(pcaOut, metadata, by="sample.id", all.x=T)
 
- pcaOut=merge(pcaOut, metadata, by="sample.id")
+ 
+ lines<-fread("/nv/vol186/bergland-lab/Priscilla/all_line_data.txt")
+ setnames(lines, "strain", "sample.id")
+ pcaOut2<-merge(pcaOut2, lines[, .(sample.id, geography, population)], all.x=T)
+ 
+ pcaOut2[, type:=ifelse(grepl("PAE", sample.id), "hybrid", "parent")]
+ pcaOut2[,group:=ifelse(type=="hybrid", paste(type, actual.cage, sep="-"),paste(type, population, sep="-"))]
 
-write.csv(pcaOut, "/scratch/pae3g/evolution/final3.vcf.PCA.csv")
+save(pcaOut2, file="/scratch/pae3g/revisions/hybrid_parent_PCA.Rdata")
 
-get karyotypes
+#get karyotypes 
+
 
  snp.dt <- data.table(snp.id=read.gdsn(index.gdsn(genofile, "snp.id")),
                       chr=read.gdsn(index.gdsn(genofile, "snp.chromosome")),
@@ -72,7 +105,7 @@ get karyotypes
                       alleles=read.gdsn(index.gdsn(genofile, "snp.allele")))
 
  ### load inversion markers
- fixedInv <- read.delim("/scratch/pae3g/evolution/inv_fixed_coord.txt", header=F, sep=" ", as.is=T)
+ fixedInv <- read.delim("/scratch/pae3g/oldscratch_recovered/evolution/inv_fixed_coord.txt", header=F, sep=" ", as.is=T)
  fixedInv <- as.data.frame(t(fixedInv))
  fixedInv$chr <- substr(fixedInv[,1], 4, 5)
  fixedInv$pos <- as.numeric(as.character(fixedInv[,2]))
@@ -189,4 +222,7 @@ get karyotypes
                  list(sample.id)]
 
 
-write.csv(kary.ag, "/scratch/pae3g/evolution/final3.vcf.karytypecalls.csv")
+save(kary.ag, file="/scratch/pae3g/revisions/parents_hybrids_karyotype_calls.Rdata") #note that this file seems to miss some of the parental inversions...
+
+
+b<-merge(kary.ag)

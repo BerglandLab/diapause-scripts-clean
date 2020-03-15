@@ -14,3 +14,6 @@ The F4 and F5 hybrids were sequenced in three libraries, named PAE\_AOB\_01, PAE
 
 * unassembled and assembled reads were merged with merge_bams.sh
 
+# determine wolbachia status from read counts
+
+* wolbachia.sh and wolbachia.R establish wolbachia status based on read counts
