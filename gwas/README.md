@@ -4,7 +4,7 @@ This set of scripts has everything required to perform association
 mapping using the R package "GENESIS". GENESIS requires a genetic
 relatedness matrix as a covariate. The association mapping is
 performed on each of the 100 randomly drawn genotype VCF files, and
-100 or 1000 permutations of the phenotypes are performed. The VCF is also annotated to perform functional enrichment analysis for diapause associated SNPs 
+100 or 1000 permutations of the phenotypes are performed. The VCF is also annotated to perform functional enrichment analysis for diapause associated SNPs
 
 ## generate master info about each SNP
 
@@ -38,5 +38,5 @@ with "make\_universal\_input.R"
 * "annotation\_enrichment" performs the enrichment analysis for annotation classes (synonymous, non-syn, etc)
 
 ## miscellaneous
-* "inversiont\_glms.R" analyzes the effect of inversions on diapause
+* "inversion\_glms.R" analyzes the effect of inversions on diapause
 * "timeless\_genotypes.R" extracts genotype information about the previously published indel in timeless using parental VCF (this polymorphism was not included in our GWAS)
