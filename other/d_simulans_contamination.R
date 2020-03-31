@@ -4,7 +4,10 @@ library(lubridate)
 library(ggplot2)
 library(cowplot)
 theme_set(theme_cowplot())
-w<-fread("~/Box Sync/Job applications/2019/alyssa_zap_counts.csv")
+#w<-fread("~/Box Sync/Job applications/2019/alyssa_zap_counts.csv")
+#w<-w[species%in%c("D. simulans", "Drosophila simulans", "D. melanogaster")]
+#write.csv(w, "~/Box Sync/scripts-working/revisions/CM_dmel_dsim_2017.2018.csv")
+w<-fread("~/Box Sync/scripts-working/revisions/CM_dmel_dsim_2017.2018.csv")
 w[,coll.date:=mdy(`Date Collected`)]
 
 w.sum<-w[,.(prop.dsim=sum(COUNT[species=="D. simulans" | species=="Drosophila simulans"], na.rm=T)/sum(COUNT[species=="D. simulans" | species=="Drosophila simulans"|species=="D. melanogaster"], na.rm=T), total=sum(COUNT[species=="D. simulans" | species=="Drosophila simulans"|species=="D. melanogaster"], na.rm=T)), .(coll.date)]
