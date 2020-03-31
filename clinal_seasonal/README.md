@@ -4,6 +4,8 @@ This folder contains the scripts used to perform  polygenic score calculations u
 
 ## polygenic score tests (multiplying effect sizes)
 
+*core20delta.R calculates the individual population changes in allele frequencyes (spring-fal, logit transformed)
+
 * sign\_test\_universal\_threshold.R intersects the quantile-ranked GWAS data with two clinal adn seasonal datasets to calculate polygenic scores
 
 * analysis on LASSO SNPs is done in the figures-generating R script
