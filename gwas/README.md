@@ -22,7 +22,7 @@ association mapping, and which SNPs need additional permutations
 * calculate PCAs to be used in LASSO model: make\_PCA\_for\_LASSO.R
 * generate input (file names, permutation numbers, and random seeds)
 with "make\_universal\_input.R"
-* use "run\_universal\_mapping.sh" to run "universal\_genesis\_mapping.R" for all imputations/permutations
+* use "run\_universal\_mapping\_dropmissing.sh" to run "universal\_genesis\_mapping\_dropmissing.R" for all imputations/permutations. Note that "dropmissing" refers to an iteration of the analysis that excludes  83 individuals with pooor genome reconstruction quality
 * the script above also runs LASSO models and calculates genomic inflation factor (GIF)
 
 ## calculate heritability
@@ -37,6 +37,11 @@ with "make\_universal\_input.R"
 * "gather\_annotations.R" extracts annotations from a gds of the vcftools
 * "annotation\_enrichment" performs the enrichment analysis for annotation classes (synonymous, non-syn, etc)
 
+## compare the LOCO and non-LOCO analysis
+* "loco\_nonloco\_corr.R" looks at the correlation of P-values
+* "loco\_vs\_nonloco\_GIF\_thinned.R" thins the GWAS results to cacluate average qq-plots
+
 ## miscellaneous
 * "inversion\_glms.R" analyzes the effect of inversions on diapause
 * "timeless\_genotypes.R" extracts genotype information about the previously published indel in timeless using parental VCF (this polymorphism was not included in our GWAS)
+* "top1percent.R generates" a large dataset containing the top 1% fof SNPs from all 6000 GWASs

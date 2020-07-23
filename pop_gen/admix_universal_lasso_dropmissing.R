@@ -18,7 +18,7 @@ ad[,chr:=tstrsplit(CHR, split="Chr")[[2]]]
 
 admix<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000], perm=files$V4[1:3000], model=files$V6[1:3000], .errorhandling="remove")%dopar%{
     print(paste(perm, draw, sep=", "))
-    load(paste0("/scratch/pae3g/revisions/lasso/", "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".lassoSites.Rdata"))
+    load(paste0("/scratch/pae3g/revisions/lasso/", "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".lassoSites.dropmissing.Rdata"))
     sites[, chr:=tstrsplit(site,split="_")[[1]]]
     sites[, pos:=as.numeric(tstrsplit(site,split="_")[[2]])]
     sites<-sites[grep("SNP", site)]
@@ -38,4 +38,4 @@ admix<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:
 }
 admix<-rbindlist(admix)
 
-save(admix, file="/scratch/pae3g/revisions/evolution/admix_universal_lasso.Rdata")
+save(admix, file="/scratch/pae3g/revisions/evolution/admix_universal_lasso_dropmissing.Rdata")

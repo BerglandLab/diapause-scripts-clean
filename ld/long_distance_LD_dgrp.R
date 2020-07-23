@@ -17,6 +17,7 @@ info<-data.table(snp.id=a$snp.id,
                  pos=a$pos,
                  freq=a$afreq)
 info[,maf:=pmin(freq, 1-freq)]
+info<-info[maf>0.05]
 
 #test 10,000 pairs for within-chromosome long-range LD (2L to 2R; 3L to 3R)
 
@@ -41,7 +42,7 @@ m<-foreach(draw=c(1:10000), .errorhandling="remove")%dopar%{
 }
 m<-rbindlist(m)
 
-write.table(m, "/scratch/pae3g/revisions/chromsome_arm_ld_dgrp.txt", quote=F, sep="\t", row.names=F)
+write.table(m, "/scratch/pae3g/revisions/chromsome_arm_ld_dgrp_maf0.05.txt", quote=F, sep="\t", row.names=F)
 
 
 m<-foreach(draw=c(1:10000), .errorhandling="remove")%dopar%{
@@ -79,5 +80,5 @@ m<-foreach(draw=c(1:10000), .errorhandling="remove")%dopar%{
 }
 m<-rbindlist(m)
 
-write.table(m, "/scratch/pae3g/revisions/interchromosomal_ld_dgrp.txt", quote=F, sep="\t", row.names=F)
+write.table(m, "/scratch/pae3g/revisions/interchromosomal_ld_dgrp_maf0.05.txt", quote=F, sep="\t", row.names=F)
 

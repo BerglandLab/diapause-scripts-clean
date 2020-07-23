@@ -23,30 +23,28 @@ registerDoMC(20)
 
 #try merging
 #snpgdsCombineGeno(gds.fn = c("/nv/vol186/bergland-lab/Priscilla/hs.hc.snp.99.9.both.linenames.vcf.gds", "/scratch/pae3g/revisions/final2.remade.vcf.gds"), out.fn = "/scratch/pae3g/revisions/hybrid_parent_allsnp_merge.vcf.gds", same.strand = T)
-
+phenos <- fread("/scratch/pae3g/revisions/phenos_wolbachia_missinggeno.txt")
+bad<-phenos[n.chr.imp!=5|prop.unknown>.05, sample.id]
 
 genofile <- snpgdsOpen("/scratch/pae3g/revisions/hybrid_parent_allsnp_merge.vcf.gds" , allow.fork=T)
 
+samps<-snpgdsSummary(genofile)$sample.id
+sampstouse<-samps[!(samps%in%bad)]
 #get informative
 snpset <- snpgdsLDpruning(genofile,
                           ld.threshold=0.2,
                           slide.max.bp = 5000,
                           autosome.only=FALSE,
-                          maf=.05)
+                          maf=.05,
+                          sample.id=sampstouse)
 
-snpset.id <-unlist(snpset)
 
 a<-snpgdsSNPList(genofile)
 info<-data.table(snp.id=a$snp.id,
                  chr=a$chromosome,
                  pos=a$pos,
                  freq=a$afreq)
-
-snpset <- snpgdsLDpruning(geno,
-                          ld.threshold=0.2,
-                          slide.max.bp = 5000,
-                          autosome.only=FALSE,
-                          maf=.05)
+snpset<-snpset[c("chr2L","chr2R", "chr3L", "chr3R", "chrX")]
 
 snpset.id <-unlist(snpset)
 
@@ -59,7 +57,7 @@ snpset.id <-unlist(snpset)
      if(i=="all") snpset.id.use <- snpset.id
      if(i!="all") snpset.id.use <- unlist(snpset[which(names(snpset)==i)])
      print(length(snpset.id.use))
-     pca.temp <- snpgdsPCA(genofile ,snp.id=snpset.id.use, autosome.only=FALSE, num.thread=10)
+     pca.temp <- snpgdsPCA(genofile ,snp.id=snpset.id.use, sample.id=sampstouse, autosome.only=FALSE, num.thread=10)
      pcaVars[[i]]=pca.temp$varprop
      #snpgdsPCASNPLoading(pca.temp, genofile)
 
@@ -94,7 +92,7 @@ snpset.id <-unlist(snpset)
  pcaOut2[, type:=ifelse(grepl("PAE", sample.id), "hybrid", "parent")]
  pcaOut2[,group:=ifelse(type=="hybrid", paste(type, actual.cage, sep="-"),paste(type, population, sep="-"))]
 
-save(pcaOut2, file="/scratch/pae3g/revisions/hybrid_parent_PCA.Rdata")
+save(pcaOut2, file="/scratch/pae3g/revisions/hybrid_parent_PCA_dropmissing.Rdata")
 
 #get karyotypes 
 

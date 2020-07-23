@@ -8,7 +8,8 @@ library(foreach)
 
 load("/scratch/pae3g/revisions/snp_annotations.Rdat")
 
-load("/scratch/pae3g/revisions/all_lasso_for_alan.Rdata")
+load("/scratch/pae3g/revisions/lasso_snps_dropmissing.Rdata") #on dryad
+p<-p[model=="nonloco"]
 m[col.class%in%c("3_prime_UTR_variant", "5_prime_UTR_premature_start_codon_gain_variant", "5_prime_UTR_variant"), group:="UTR"]
 m[col.class%in%c("downstream_gene_variant", "upstream_gene_variant"), group:="up/down"]
 m[col.class=="synonymous_variant"|col.class=="splice_region_variant&synonymous_variant", group:="syn"]
@@ -56,7 +57,7 @@ test<-rbindlist(test)
 test<-test[!is.na(test)]
 
 #look at top percentages
-load("/scratch/pae3g/revisions/gwas_top1percent.Rdat")
+load("/scratch/pae3g/revisions/gwas_top1percent_dropmissing.Rdat")
 setnames(y, "draw", "GRM")
 setnames(y, "phenotype", "pheno")
 #caculate number of snps in each quantile
@@ -121,11 +122,24 @@ annotation.test.wide.med<-dcast(annotation.test,test+pop+pheno~q , value.var="me
 annotation.test.wide[,phenotype:=ifelse(pheno=="diapause.bin", 'stage 8', "stage 10")]
 annotation.test.wide[,pheno:=NULL]
 setnames(annotation.test.wide, c("-2", "-3", "-4"), c("Top 1%", "Top 0.1%", "Top 0.01%"))
-write.csv(annotation.test.wide, "/scratch/pae3g/revisions/figures/annotation_enrichment.csv")
+write.csv(annotation.test.wide, "/scratch/pae3g/revisions/figures/annotation_enrichment_dropmissing.csv")
 
 
 
 annotation.test.wide.med[,phenotype:=ifelse(pheno=="diapause.bin", 'stage 8', "stage 10")]
 annotation.test.wide.med[,pheno:=NULL]
 setnames(annotation.test.wide.med, c("-2", "-3", "-4"), c("Top 1%", "Top 0.1%", "Top 0.01%"))
-write.csv(annotation.test.wide.med, "/scratch/pae3g/revisions/figures/annotation_proportions.csv")
+write.csv(annotation.test.wide.med, "/scratch/pae3g/revisions/figures/annotation_proportions_dropmissing.csv")
+
+#save annotations for Table S6
+p[,pheno:=ifelse(pheno=="diapause.bin9", "stage 10", 'stage 8')]
+p.sum<-p[perm==0,.(n.imputation=.N, median.coefficient=median(coef)), .(chr, pos, pheno, pop, col.class, col.gene,variant.id)]
+write.csv(p.sum, "/scratch/pae3g/revisions/lasso_annotations.csv", quote=F)
+
+
+y[,pheno:=ifelse(pheno=="diapause.bin9", "stage 10", 'stage 8')]
+
+y.sum1<-y[perm==0&q<=(-4),.(n.imputation=.N, median.Score=median(Score), median.pval=median(Score.pval)), .(chr, pos, pheno, pop, col.class, col.gene)]
+write.csv(y.sum1, "/scratch/pae3g/revisions/q4_annotations.csv")
+y.sum2<-y[perm==0&q<=(-3),.(n.imputation=.N, median.Score=median(Score), median.pval=median(Score.pval)), .(chr, pos, pheno, pop, col.class, col.gene)]
+write.csv(y.sum2, "/scratch/pae3g/revisions/q3_annotations.csv")

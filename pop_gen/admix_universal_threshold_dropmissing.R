@@ -22,7 +22,7 @@ ad[,id:=1:nrow(ad)]
 admix<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000], perm=files$V4[1:3000], model=files$V6[1:3000])%dopar%{
     print(paste(draw, perm, sep=","))
     #read lasso SNPs and do some fixes
-    load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia.Rdat", sep=""))
+    load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia_dropmissing.Rdat", sep=""))
     gwas<-assoc.results
     gwas[,maf:=pmin(freq, 1-freq)]
     gwas<-gwas[maf>=0.05]
@@ -51,7 +51,7 @@ admix<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:
 
 admix<-rbindlist(admix)
 
-save(admix, file="/scratch/pae3g/revisions/evolution/ZI_admix_universal_threshold.Rdata")
+save(admix, file="/scratch/pae3g/revisions/evolution/ZI_admix_universal_threshold_dropmissing.Rdata")
 
 # admix.sum<-admix[,.(total.admix=sum(n.admix)/.N, unique.admix=sum(n.admix>0)/.N, n=.N), .(perm, draw)]
 # 

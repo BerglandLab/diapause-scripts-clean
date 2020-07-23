@@ -28,7 +28,7 @@ files<-fread("/scratch/pae3g/genome-reconstruction/universal_input.txt")
 y<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000], perm=files$V4[1:3000], model=files$V6[1:3000])%dopar%{
     print(paste(draw, perm, sep=","))
     #read gwas adn do some fixes
-    load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia.Rdat", sep=""))
+    load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia_dropmissing.Rdat", sep=""))
     gwas<-assoc.results
     gwas[,maf:=pmin(freq, 1-freq)]
     gwas<-gwas[maf>=0.05]
@@ -44,7 +44,9 @@ y<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000
     gwas[,FT.seas:=ifelse(sign(Score)==(-1) & sign(sfsfsfX.beta)==1, T, F)]
     gwas[,FF.seas:=ifelse(sign(Score)==(-1) & sign(sfsfsfX.beta)==(-1), T, F)]
 
+    #bergland cline is based on alternate alleles and needs to be flipped. 
     gwas[,ps.cline:=-1*Score.Stat*clinal.beta]
+    #bergland positive clinal beta means alternate allele is higher in the fall (same direction as gwas)
     gwas[,ps.seas:=1*Score.Stat*sfsfsfX.beta]
 
 
@@ -97,7 +99,7 @@ y<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000
 
 y<-rbindlist(y)
 
-save(y, file="/scratch/pae3g/revisions/evolution/bergland2014_sign_universal_threshold.Rdata")
+save(y, file="/scratch/pae3g/revisions/evolution/bergland2014_sign_universal_threshold_dropmissing.Rdata")
 
 print("machado 2019")
 
@@ -119,7 +121,7 @@ x<-x[seas.beta<3&seas.beta>(-3)]
 y<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000], perm=files$V4[1:3000], model=files$V6[1:3000], .errorhandling="remove")%dopar%{
     print(paste(draw, perm, sep=","))
     #read gwas adn do some fixes
-    load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia.Rdat", sep=""))
+    load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia_dropmissing.Rdat", sep=""))
     gwas<-assoc.results
     gwas[,maf:=pmin(freq, 1-freq)]
     gwas<-gwas[maf>=0.05]
@@ -136,6 +138,7 @@ y<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000
     gwas[,FF.seas:=ifelse(sign(Score)==(-1) & sign(seas.beta)==(1), T, F)]
     
     gwas[,ps.cline:=-1*Score.Stat*clinal.beta]
+    #note that the seasonal polygenic score should have had a *-1 in it and needs to be flipped for plotting
     gwas[,ps.seas:=1*Score.Stat*seas.beta]
     
     
@@ -187,7 +190,7 @@ y<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000
 
 y<-rbindlist(y)
 
-save(y, file="/scratch/pae3g/revisions/evolution/bergland2019_sign_universal_threshold.Rdata")
+save(y, file="/scratch/pae3g/revisions/evolution/bergland2019_sign_universal_threshold_dropmissing.Rdata")
 
 
 print("individual populations")
@@ -200,7 +203,7 @@ pops<-names(deltas)
 y<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000], perm=files$V4[1:3000], model=files$V6[1:3000], .errorhandling="remove")%dopar%{
     print(paste(draw, perm, sep=","))
     #read gwas adn do some fixes
-    load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia.Rdat", sep=""))
+    load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia_dropmissing.Rdat", sep=""))
     gwas<-assoc.results
     gwas[,maf:=pmin(freq, 1-freq)]
     gwas<-gwas[maf>=0.05]
@@ -237,7 +240,7 @@ y<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000
 
 y<-rbindlist(y)
 
-save(y, file="/scratch/pae3g/revisions/evolution/single_population_sign_universal_threshold.Rdata")
+save(y, file="/scratch/pae3g/revisions/evolution/single_population_sign_universal_threshold_dropmissing.Rdata")
 
 
 

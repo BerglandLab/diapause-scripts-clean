@@ -37,68 +37,68 @@ a.raw<-fread("/scratch/pae3g/revisions/evolution/ihs.txt")
 files<-fread("/scratch/pae3g/genome-reconstruction/universal_input.txt")
 
 #read in files
-p<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000], perm=files$V4[1:3000], model=files$V6[1:3000], .errorhandling="remove")%dopar%{
-    load(paste0("/scratch/pae3g/revisions/lasso/", "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".lassoSites.dropmissing.Rdata"))
-    sites[, chr:=tstrsplit(site,split="_")[[1]]]
-    sites[, pos:=as.numeric(tstrsplit(site,split="_")[[2]])]
-    print(paste(pop, phenotype, draw, perm, model, sep=", "))
-    
-    #read in GWAS p values and scores
-    load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia_dropmissing.Rdat", sep=""))
-
-    #merge wtih info because chromosomes got lost in genesis
-    gwas<-assoc.results
-    setnames(gwas, c("chr", "pos"), c("CHR", "POSITION"))
-
-    #merge with ihs data
-    a<-merge(a.raw, gwas, by=c("CHR", "POSITION"), all.x=T)
-    #currently coded so that ancestral allele is reference (0) and derived allele is alternate (1)
-    #we want "derived" to be the pro-diapause allele
-    #positive score means that ref is pro-diapause (aka ancestral is pro diapause)
-    #so, when gwas score is POSTIVE, switch ihh_a and ihh_d before computing ihs
-
-    a[Score>=0,ihh.a:=iHH_D]
-    a[is.na(Score)|Score<0,ihh.a:=iHH_A]
-    a[Score>=0,ihh.d:=iHH_A]
-    a[is.na(Score)|Score<0,ihh.d:=iHH_D]
-
-    #flip allele frequency if ancestral and derived are flipped
-    a[Score>=0, freq_A:=1-freq_A]
-
-    #delete original calls and rename
-    a[,iHH_A:=NULL]
-    a[,iHH_D:=NULL]
-    setnames(a, c("ihh.a", "ihh.d"), c("iHH_A", "iHH_D"))
-    a<-a[,.(CHR, POSITION, freq_A,  iHH_A, iHH_D, iES_Tang_et_al_2007, iES_Sabeti_et_al_2007)]
-
-    b<-ihh2ihs(a) #note the default is discard maf < 0.05
-    c<-as.data.table(b$ihs)
-
-    d<-merge(gwas, c, by=c("CHR", "POSITION"))
-    setnames(d, c("CHR","POSITION", "LOGPVALUE"), c("chr", "pos",'ihs.p'))
-
-    f<-merge(sites[,.(chr, pos)], d, by=c("chr", "pos"))
-    #pull out most significant snp in each block
-    f[,perm:=perm]
-    f[,draw:=draw]
-    f[,pheno:=phenotype]
-    f[,pop:=pop]
-    f[,model:=model]
-    f[,test:="dgrp"]
-    #save output
-    return(f)
-}
-
-p<-rbindlist(p)
-
-
-save(p, file="/scratch/pae3g/revisions/evolution/ihs_dgrp_universal_lasso_dropmissing.Rdata")
+# p<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000], perm=files$V4[1:3000], model=files$V6[1:3000], .errorhandling="remove")%dopar%{
+#     load(paste0("/scratch/pae3g/revisions/lasso/", "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.lassoSites.Rdata"))
+#     sites[, chr:=tstrsplit(site,split="_")[[1]]]
+#     sites[, pos:=as.numeric(tstrsplit(site,split="_")[[2]])]
+#     print(paste(pop, phenotype, draw, perm, model, sep=", "))
+#     
+#     #read in GWAS p values and scores
+#     load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia_dropmissing.Rdat", sep=""))
+# 
+#     #merge wtih info because chromosomes got lost in genesis
+#     gwas<-assoc.results
+#     setnames(gwas, c("chr", "pos"), c("CHR", "POSITION"))
+# 
+#     #merge with ihs data
+#     a<-merge(a.raw, gwas, by=c("CHR", "POSITION"), all.x=T)
+#     #currently coded so that ancestral allele is reference (0) and derived allele is alternate (1)
+#     #we want "derived" to be the pro-diapause allele
+#     #positive score means that ref is pro-diapause (aka ancestral is pro diapause)
+#     #so, when gwas score is POSTIVE, switch ihh_a and ihh_d before computing ihs
+# 
+#     a[Score>=0,ihh.a:=iHH_D]
+#     a[is.na(Score)|Score<0,ihh.a:=iHH_A]
+#     a[Score>=0,ihh.d:=iHH_A]
+#     a[is.na(Score)|Score<0,ihh.d:=iHH_D]
+# 
+#     #flip allele frequency if ancestral and derived are flipped
+#     a[Score>=0, freq_A:=1-freq_A]
+# 
+#     #delete original calls and rename
+#     a[,iHH_A:=NULL]
+#     a[,iHH_D:=NULL]
+#     setnames(a, c("ihh.a", "ihh.d"), c("iHH_A", "iHH_D"))
+#     a<-a[,.(CHR, POSITION, freq_A,  iHH_A, iHH_D, iES_Tang_et_al_2007, iES_Sabeti_et_al_2007)]
+# 
+#     b<-ihh2ihs(a) #note the default is discard maf < 0.05
+#     c<-as.data.table(b$ihs)
+# 
+#     d<-merge(gwas, c, by=c("CHR", "POSITION"))
+#     setnames(d, c("CHR","POSITION", "LOGPVALUE"), c("chr", "pos",'ihs.p'))
+# 
+#     f<-merge(sites[,.(chr, pos)], d, by=c("chr", "pos"))
+#     #pull out most significant snp in each block
+#     f[,perm:=perm]
+#     f[,draw:=draw]
+#     f[,pheno:=phenotype]
+#     f[,pop:=pop]
+#     f[,model:=model]
+#     f[,test:="dgrp"]
+#     #save output
+#     return(f)
+# }
+# 
+# p<-rbindlist(p)
+# 
+# 
+# save(p, file="/scratch/pae3g/revisions/evolution/ihs_dgrp_universal_lasso_dropmissing.Rdata")
 
 
 a.raw<-fread("/scratch/pae3g/revisions/evolution/BME_LN_LNPA.ihs.txt")
 
 p<-foreach(pop=files$V1[1:3000], phenotype=files$V2[1:3000],draw=files$V3[1:3000], perm=files$V4[1:3000], model=files$V6[1:3000], .errorhandling="remove")%dopar%{
-    load(paste0("/scratch/pae3g/revisions/lasso/", "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".lassoSites.dropmissing.Rdata"))
+    load(paste0("/scratch/pae3g/revisions/lasso/", "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.lassoSites.Rdata"))
     sites[, chr:=tstrsplit(site,split="_")[[1]]]
     sites[, pos:=as.numeric(tstrsplit(site,split="_")[[2]])]
     print(paste(pop, phenotype, draw, perm, model, sep=", "))

@@ -89,7 +89,7 @@ geno <- GdsGenotypeReader.par(filename = paste(filestem, ".vcf.gds", sep=""), al
 g <- GenotypeData(geno)
 
 #read data
-phenos <- fread("/nv/vol186/bergland-lab/Priscilla/phenos_wolbachia.txt")
+phenos <- fread("/scratch/pae3g/revisions/phenos_wolbachia_missinggeno.txt")
 setkey(phenos, id)
 
 ### load appropriate GRM(s)	
@@ -99,14 +99,25 @@ if (pop=="both"&model=="nonloco"){
 }else if (pop!="both"&model=="nonloco") {
   load(paste(filestem, "_nonLOCO_Eigenstrat_allgwasSNPs_", pop, ".Rdat", sep=""))
 }else if (pop!="both"&model=="loco"){
-  load(paste(filestem, "_LOCO_Eigenstrat_allgwasSNPs_", pop, ".Rdat", sep=""))
+  load(paste(filestem, "_LOCO_Eigenstrat_allsnps_", pop, ".Rdat", sep=""))
   a<-loco.list[[1]]
 }else if (pop=="both"&model=="loco"){
-  load(paste(filestem, "_LOCO_Eigenstrat_allgwasSNPs.Rdat", sep=""))
+  load(paste(filestem, "_LOCO_Eigenstrat_allsnps.Rdat", sep=""))
   a<-loco.list[[1]]
 }
 
-phenos <- phenos[id %in% rownames(a)]
+#drop samples with reconstruction issues
+
+phenos <- phenos[n.chr.imp==5&prop.unknown<=0.05]
+
+#for single swarm analysis, subset phenos to only that swarm
+if(pop!="both"){
+  phenos<-phenos[swarm==pop]
+}
+
+#subset sample GRM to only the samples that will be used
+a<-a[phenos$sample.id, phenos$sample.id]
+
 #if a permutation, randomly scramble sample ids within a swarm. if perm is 0, ids will stay the same
 if(perm!=0){
   set.seed(seed)
@@ -123,7 +134,7 @@ if(phenotype=="diapause.bin"){
 if(phenotype=="diapause.bin9"){
   phenos[,mapping_pheno:=diapause.bin9]
 }
-if(!file.exists(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia.Rdat", sep=""))){  
+if(!file.exists(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia_dropmissing.Rdat", sep=""))){  
   print("starting gwas")
   #make scanAnnot dataframe
   scanAnnot <- ScanAnnotationDataFrame(phenos[,.(scanID, temp.rack.cal, generation, photoperiod, wolbachia, mapping_pheno, swarm)])
@@ -132,7 +143,7 @@ if(!file.exists(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", d
   filters=fread("/scratch/pae3g/oldscratch_recovered/final_reconstruction2/hwe_missing_maf_filters.txt")
   
   pass=filters[map_filter=="PASS", snp.id]
-  rm(filters)
+  #rm(filters)
   
   #nonloco mapping
   
@@ -194,7 +205,7 @@ if(!file.exists(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", d
         if(i=="2L"|i=="3L"|i=="X"){
           nullmod <- fitNullModel(x = scanAnnot, 
                                   outcome = "mapping_pheno",  
-                                  cov.mat = loco.list[[chr.i]], 
+                                  cov.mat = loco.list[[chr.i]][phenos$sample.id, phenos$sample.id], 
                                   covars = c("temp.rack.cal", "generation", "photoperiod", "wolbachia"),
                                   family = binomial,
                                   drop.zeros=F)
@@ -203,7 +214,7 @@ if(!file.exists(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", d
         if(i=="2L"|i=="3L"|i=="X"){
           nullmod <- fitNullModel(x = scanAnnot, 
                                   outcome = "mapping_pheno",  
-                                  cov.mat = loco.list[[chr.i]], 
+                                  cov.mat = loco.list[[chr.i]][phenos$sample.id, phenos$sample.id], 
                                   covars = c("temp.rack.cal", "generation", "photoperiod", "swarm", "wolbachia"),
                                   family = binomial,
                                   drop.zeros=F)
@@ -245,10 +256,10 @@ if(!file.exists(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", d
   assoc.results[,model:=model]
   assoc.results[,phenotype:=phenotype]
   
-  save(assoc.results, file=paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia.Rdat", sep=""))
+  save(assoc.results, file=paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia_dropmissing.Rdat", sep=""))
 }else{
   print("gwas already done; loading results")
-  load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia.Rdat", sep=""))
+  load(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", draw, "_perm", perm, "_pop", pop, "_" , model, "_allsnpgrm_wolbachia_dropmissing.Rdat", sep=""))
 }
 
 
@@ -256,7 +267,7 @@ if(!file.exists(paste("/scratch/pae3g/revisions/genesis_", phenotype, "_draw", d
 ##### run LASSO #######
 outdir<-"/scratch/pae3g/revisions/lasso/"
 
-if(!file.exists(paste0(outdir, "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".lassoSites.Rdata"))){
+if(!file.exists(paste0(outdir, "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.lassoSites.Rdata"))){
   print("running lasso")
   maf.threshold=0.05
   maxRank <- 10000   ### how many SNPs to dump into LASSO?
@@ -397,11 +408,11 @@ if(!file.exists(paste0(outdir, "lasso_", phenotype, "_draw",draw, "_perm", perm,
   }
   
   print("saving output")
-  pred.out.fn <- paste0(outdir, "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".lassoPred.Rdata")
+  pred.out.fn <- paste0(outdir, "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.lassoPred.Rdata")
   
-  sites.out.fn <-   paste0(outdir, "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".lassoSites.Rdata")
+  sites.out.fn <-   paste0(outdir, "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.lassoSites.Rdata")
   
-  fits.out.fn <-  paste0(outdir, "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".lassoData.Rdata")
+  fits.out.fn <-  paste0(outdir, "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.lassoData.Rdata")
   
   save(pred, file=pred.out.fn)
   
@@ -411,7 +422,7 @@ if(!file.exists(paste0(outdir, "lasso_", phenotype, "_draw",draw, "_perm", perm,
   
 }
 
-if(!file.exists(paste0(outdir, "GIF_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".Rdata"))){
+if(!file.exists(paste0(outdir, "GIF_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.Rdata"))){
   #CALCULATE GIF and SAVE
   gwas<-assoc.results
   print("calculating GIF")
@@ -427,10 +438,10 @@ if(!file.exists(paste0(outdir, "GIF_", phenotype, "_draw",draw, "_perm", perm, "
                 pheno=phenotype,
                 model=model)
   
-  save(g, file=paste0(outdir, "GIF_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".Rdata"))
+  save(g, file=paste0(outdir, "GIF_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.Rdata"))
 }
 
-if(!file.exists(paste0(outdir, "GIFbychr_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".Rdata"))){
+if(!file.exists(paste0(outdir, "GIFbychr_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.Rdata"))){
   #CALCULATE GIF and SAVE
   x<-foreach(CHR=c("2L", "2R", "3L", "3R", "X"))%do%{
     gwas<-assoc.results[chr==CHR]
@@ -451,5 +462,5 @@ if(!file.exists(paste0(outdir, "GIFbychr_", phenotype, "_draw",draw, "_perm", pe
   }
   x<-rbindlist(x)
   
-  save(x, file=paste0(outdir, "GIFbychr_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".Rdata"))
+  save(x, file=paste0(outdir, "GIFbychr_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.Rdata"))
 }
