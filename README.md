@@ -24,4 +24,4 @@ The general workflow procedes through the folders in the following order:
 
 8. **other** contains several miscellaneous analysis items related to the phenotyping and field experiments
 
-The final figures and some of the analysis are done and produced in the file "code\_by\_figure_R1.R".
+The final figures and some of the analysis are done and produced in the file "code\_by\_figure_R2.R".

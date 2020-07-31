@@ -456,9 +456,9 @@ library(data.table)
 library(Rmisc)
 
 #hybrid swarm data
-hs.a<-fread("/scratch/pae3g/evolution/ld_decay_maf0.05_popA.txt")
-hs.b<-fread("/scratch/pae3g/evolution/ld_decay_maf0.05_popB.txt")
-hs.both<-fread("/scratch/pae3g/evolution/ld_decay_maf0.05_popboth.txt")
+hs.a<-fread("/scratch/pae3g/evolution/ld_decay_maf0.05_popA.txt") #on dryad
+hs.b<-fread("/scratch/pae3g/evolution/ld_decay_maf0.05_popB.txt")#on dryad
+hs.both<-fread("/scratch/pae3g/evolution/ld_decay_maf0.05_popboth.txt")#on dryad
 
 
 hs.a[,r2:=ld*ld]
@@ -555,61 +555,62 @@ a<-ggplot()+
         breaks = scales::trans_breaks("log10", function(x) 10^x),
         labels = scales::trans_format("log10", scales::math_format(10^.x))
     ) +
-    scale_y_log10(
-        breaks = scales::trans_breaks("log10", function(x) 10^x),
-        labels = scales::trans_format("log10", scales::math_format(10^.x))
-    ) +
-    annotation_logticks(side="b")
+    # scale_y_log10(
+    #     breaks = scales::trans_breaks("log10", function(x) 10^x),
+    #     labels = scales::trans_format("log10", scales::math_format(10^.x))
+    # ) +
+    scale_y_log10(limits=c(0.005, 0.5), breaks=c(0.5, 0.1, 0.05, 0.01, 0.005))+
+    annotation_logticks(side="bl")
 
 #hybrid swarm long distance LD
 
-inter.hs.a=fread("/scratch/pae3g/revisions/interchromosomal_ld_A.txt") 
+inter.hs.a=fread("/scratch/pae3g/revisions/interchromosomal_ld_A.txt") # summarized in file on dryad
 inter.hs.a[,pop:="A"]
 inter.hs.a[,group:="hs"]
-inter.hs.b=fread("/scratch/pae3g/revisions/interchromosomal_ld_B.txt") 
+inter.hs.b=fread("/scratch/pae3g/revisions/interchromosomal_ld_B.txt") #summarized in file on dryad
 inter.hs.b[,pop:="B"]
 inter.hs.b[,group:="hs"]
-inter.hs.both=fread("/scratch/pae3g/revisions/interchromosomal_ld_both.txt") 
+inter.hs.both=fread("/scratch/pae3g/revisions/interchromosomal_ld_both.txt")  #summarized in file on dryad
 inter.hs.both[,pop:="both"]
 inter.hs.both[,group:="hs"]
 
-intra.hs.a=fread("/scratch/pae3g/revisions/chromsome_arm_ld_A.txt") 
+intra.hs.a=fread("/scratch/pae3g/revisions/chromsome_arm_ld_A.txt") #summarized in file on dryad
 intra.hs.a[,pop:="A"]
 intra.hs.a[,group:="hs"]
-intra.hs.b=fread("/scratch/pae3g/revisions/chromsome_arm_ld_B.txt") 
+intra.hs.b=fread("/scratch/pae3g/revisions/chromsome_arm_ld_B.txt") #summarized in file on dryad
 intra.hs.b[,pop:="B"]
 intra.hs.b[,group:="hs"]
-intra.hs.both=fread("/scratch/pae3g/revisions/chromsome_arm_ld_both.txt") 
+intra.hs.both=fread("/scratch/pae3g/revisions/chromsome_arm_ld_both.txt") #summarized in file on dryad
 intra.hs.both[,pop:="both"]
 intra.hs.both[,group:="hs"]
 
 
-intra.p.a=fread("/scratch/pae3g/revisions/chromsome_arm_ld_parents_popA.txt") 
+intra.p.a=fread("/scratch/pae3g/revisions/chromsome_arm_ld_parents_popA.txt") #summarized in file on dryad
 intra.p.a[,pop:="A"]
 intra.p.a[,group:="parents"]
-intra.p.b=fread("/scratch/pae3g/revisions/chromsome_arm_ld_parents_popB.txt") 
+intra.p.b=fread("/scratch/pae3g/revisions/chromsome_arm_ld_parents_popB.txt") #summarized in file on dryad
 intra.p.b[,pop:="B"]
 intra.p.b[,group:="parents"]
-intra.p.both=fread("/scratch/pae3g/revisions/chromsome_arm_ld_parents_popboth.txt") 
+intra.p.both=fread("/scratch/pae3g/revisions/chromsome_arm_ld_parents_popboth.txt") #summarized in file on dryad
 intra.p.both[,pop:="both"]
 intra.p.both[,group:="parents"]
 
-inter.p.a=fread("/scratch/pae3g/revisions/interchromosomal_ld_parents_popA.txt") 
+inter.p.a=fread("/scratch/pae3g/revisions/interchromosomal_ld_parents_popA.txt") #summarized in file on dryad
 inter.p.a[,pop:="A"]
 inter.p.a[,group:="parents"]
-inter.p.b=fread("/scratch/pae3g/revisions/interchromosomal_ld_parents_popB.txt") 
+inter.p.b=fread("/scratch/pae3g/revisions/interchromosomal_ld_parents_popB.txt") #summarized in file on dryad
 inter.p.b[,pop:="B"]
 inter.p.b[,group:="parents"]
-inter.p.both=fread("/scratch/pae3g/revisions/interchromosomal_ld_parents_popboth.txt") 
+inter.p.both=fread("/scratch/pae3g/revisions/interchromosomal_ld_parents_popboth.txt") #summarized in file on dryad
 inter.p.both[,pop:="both"]
 inter.p.both[,group:="parents"]
 
 
-intra.d=fread("/scratch/pae3g/revisions/chromsome_arm_ld_dgrp_maf0.05.txt") 
+intra.d=fread("/scratch/pae3g/revisions/chromsome_arm_ld_dgrp_maf0.05.txt") #summarized in file on dryad
 intra.d[,pop:="dgrp"]
 intra.d[,group:="hs"]
 
-inter.d=fread("/scratch/pae3g/revisions/interchromosomal_ld_dgrp_maf0.05.txt") 
+inter.d=fread("/scratch/pae3g/revisions/interchromosomal_ld_dgrp_maf0.05.txt") #summarized in file on dryad
 inter.d[,pop:="dgrp"]
 inter.d[,group:="hs"]
 
@@ -682,9 +683,9 @@ library(ggbeeswarm)
 
 load("/scratch/pae3g/revisions/evolution/bergland2014_sign_universal_threshold_dropmissing.Rdata") #on dryad
 #loads in as y
-load("/scratch/pae3g/oldscratch_recovered/evolution/6d_data.Rdata")
+load("/scratch/pae3g/oldscratch_recovered/evolution/6d_data.Rdata") #from bergland 2014, also on dryad
 b<-as.data.table(p)
-files<-fread("/scratch/pae3g/genome-reconstruction/universal_input.txt")
+files<-fread("/scratch/pae3g/genome-reconstruction/universal_input.txt") #on dryad
 
 load("/scratch/pae3g/revisions/lasso_snps_dropmissing.Rdata") #on dryad
 
@@ -1116,13 +1117,13 @@ library(foreach)
 library(viridis)
 
 
-load("/scratch/pae3g/revisions/gwas_top1percent_dropmissing.Rdat") #loads as y
+load("/scratch/pae3g/revisions/gwas_top1percent_dropmissing.Rdat") #on dryad; loads as y
 top<-copy(y)
 
 #filter to stage 8, both, non-permuted
 top<-top[perm==0&phenotype=="diapause.bin"&pop=="both"&q<=(-4)]
 
-#first make manhattan plots of SNPs. need some basic data
+#first make manhattan plots of SNPs. need some basic data from the GWAS (locations of all SNPs to make x axis)
 draw=1
 load(paste("/scratch/pae3g/revisions/genesis_diapause.bin9_draw", draw, "_perm0_popboth_nonloco_allsnpgrm_wolbachia_dropmissing.Rdat", sep=""))
 gwas<-assoc.results
@@ -1137,11 +1138,11 @@ chr.table[chr=="2L", midpoint:=max.id/2]
 
 top.man<-ggplot(top, aes(x=variant.id, y=-log10(Score.pval), color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL, y=expression("-log"[10]*"(P)"))+scale_x_continuous(breaks=chr.table$midpoint, labels=c("2L", "2R", "3L", "3R", "X"))
 
 
-load("/scratch/pae3g/oldscratch_recovered/evolution/6d_data.Rdata")
+load("/scratch/pae3g/oldscratch_recovered/evolution/6d_data.Rdata") #from bergland 2014, also on dryad
 cline<-as.data.table(p)
 
 cline[,maf:=pmin(f.hat, 1-f.hat)]
@@ -1154,7 +1155,7 @@ top.cline[,ps.cline:=-1*Score.Stat*clinal.beta]
 
 top.cline.man<-ggplot(top.cline, aes(x=variant.id, y=ps.cline, color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL, y=expression("Clinal score"))+scale_x_continuous(breaks=chr.table$midpoint, labels=c("2L", "2R", "3L", "3R", "X"))+
     geom_hline(yintercept=0, linetype="dashed", color="grey50")
 
@@ -1179,14 +1180,14 @@ ihs.dgrp<-rbindlist(ihs.dgrp)
 
 top.ihs.dgrp.man<-ggplot(ihs.dgrp[q<=-4], aes(x=variant.id, y=IHS, color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL, y=expression("DGRP IHS"))+scale_x_continuous(breaks=chr.table$midpoint, labels=c("2L", "2R", "3L", "3R", "X"))+
     geom_hline(yintercept=0, linetype="dashed", color="grey50")
 
 
 top.ihs.north.man<-ggplot(ihs.north[q<=-4], aes(x=variant.id, y=IHS, color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL, y=expression("Northern IHS"))+scale_x_continuous(breaks=chr.table$midpoint, labels=c("2L", "2R", "3L", "3R", "X"))+
     geom_hline(yintercept=0, linetype="dashed", color="grey50")
 
@@ -1209,13 +1210,13 @@ pop.test<-rbindlist(pop.test)
 #just plot two populations: Charlottesville and mass
 cua.plot<-ggplot(pop.test[q<=-4&population=="CUA_14"], aes(x=variant.id, y=ps, color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL, y=expression("VA seas. score"))+scale_x_continuous(breaks=chr.table$midpoint, labels=c("2L", "2R", "3L", "3R", "X"))+
     geom_hline(yintercept=0, linetype="dashed", color="grey50")
 
 lma.plot<-ggplot(pop.test[q<=-4&population=="LMA_14"], aes(x=variant.id, y=ps, color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL, y=expression("MA seas. score"))+scale_x_continuous(breaks=chr.table$midpoint, labels=c("2L", "2R", "3L", "3R", "X"))+
     geom_hline(yintercept=0, linetype="dashed", color="grey50")
 
@@ -1227,48 +1228,48 @@ leftside<-plot_grid(top.man, top.cline.man, top.ihs.dgrp.man, top.ihs.north.man,
 
 top.man.X<-ggplot(top[chr=="X"&pos>3600000&pos<3700000], aes(x=pos/1000000, y=-log10(Score.pval), color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL, y=NULL)+
-    lims(x=c(3.65,3.7))
+    scale_x_continuous(limits=c(3.66, 3.685), breaks=c(3.66, 3.67, 3.68))
 
 
 top.cline.man.X<-ggplot(top.cline[chr=="X"&pos>3600000&pos<3700000], aes(x=pos/1000000, y=ps.cline, color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL, y=NULL)+
     geom_hline(yintercept=0, linetype="dashed", color="grey50")+
-    lims(x=c(3.65,3.7))
+    scale_x_continuous(limits=c(3.66, 3.685), breaks=c(3.66, 3.67, 3.68))
 
 
 top.ihs.dgrp.man.X<-ggplot(ihs.dgrp[q<=-4&chr=="X"&pos>3600000&pos<3700000], aes(x=pos/1000000, y=IHS, color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL,  y=NULL)+
     geom_hline(yintercept=0, linetype="dashed", color="grey50")+
-    lims(x=c(3.65,3.7))
+    scale_x_continuous(limits=c(3.66, 3.685), breaks=c(3.66, 3.67, 3.68))
 
 
 top.ihs.north.man.X<-ggplot(ihs.north[q<=-4&chr=="X"&pos>3600000&pos<3700000], aes(x=pos/1000000, y=IHS, color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL,  y=NULL)+
     geom_hline(yintercept=0, linetype="dashed", color="grey50")+
-    lims(x=c(3.65,3.7))
+    scale_x_continuous(limits=c(3.66, 3.685), breaks=c(3.66, 3.67, 3.68))
 
 
 cua.plot.X<-ggplot(pop.test[q<=-4&population=="CUA_14"&chr=="X"&pos>3600000&pos<3700000], aes(x=pos/1000000, y=ps, color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL,  y=NULL)+
     geom_hline(yintercept=0, linetype="dashed", color="grey50")+
-    lims(x=c(3.65,3.7))
+    scale_x_continuous(limits=c(3.66, 3.685), breaks=c(3.66, 3.67, 3.68))
 
 lma.plot.X<-ggplot(pop.test[q<=-4&population=="LMA_14"&chr=="X"&pos>3600000&pos<3700000], aes(x=pos/1000000, y=ps, color=draw))+
     geom_point()+
-    scale_color_viridis()+
+    scale_color_viridis(direction=-1)+
     theme(legend.position="none")+labs(x=NULL,  y=NULL)+
     geom_hline(yintercept=0, linetype="dashed", color="grey50")+
-    lims(x=c(3.65,3.7))
+    scale_x_continuous(limits=c(3.66, 3.685), breaks=c(3.66, 3.67, 3.68))
 
 rightside<-plot_grid(top.man.X, top.cline.man.X, top.ihs.dgrp.man.X, top.ihs.north.man.X, cua.plot.X, lma.plot.X, nrow=6, align="v", axis="l")
 
@@ -1277,6 +1278,27 @@ pdf("/scratch/pae3g/revisions/figures/pop_gen_manhattan.pdf", height=10, width=8
 plot_grid(leftside, rightside, rel_widths = c(0.65, 0.35))
 dev.off()
 
+#make supplemental table with tlk data and annotations
+
+top.p<-top[chr=="X"&pos>3660000&pos<3685000, .(n.imp=.N, avg.Pvalue=mean(Score.pval)), .(chr, pos)]
+
+top.cline.avg<-top.cline[chr=="X"&pos>3660000&pos<3685000, .(avg.clinal.score=mean(ps.cline)), .(chr, pos)]
+
+top.ihs.dgrp<-ihs.dgrp[chr=="X"&pos>3660000&pos<3685000&q<=(-4), .(avg.ihs.dgrp=mean(IHS)), .(chr, pos)]
+top.ihs.north<-ihs.north[chr=="X"&pos>3660000&pos<3685000&q<=(-4), .(avg.ihs.north=mean(IHS)), .(chr, pos)]
+
+#load in annotations
+load("/scratch/pae3g/revisions/snp_annotations.Rdat")
+
+
+top.p<-merge(top.p, m, by=c("chr", "pos"))
+
+top.p<-merge(top.p, top.cline.avg, by=c("chr", "pos"), all=T)
+
+top.p<-merge(top.p, top.ihs.dgrp, by=c("chr", "pos"), all=T)
+top.p<-merge(top.p, top.ihs.north, by=c("chr", "pos"), all=T)
+
+write.csv(top.p, "/scratch/pae3g/revisions/tlk_snps.csv", quote=F, row.names=F)
 
 
 ####################################################
@@ -1529,7 +1551,7 @@ library(data.table)
 library(cowplot)
 
 
-data<-fread("~/Box Sync/manuscripts/diapause gwas/dryad_upload/yeast_supplementation.csv")
+data<-fread("~/Box Sync/manuscripts/diapause gwas/dryad_upload/yeast_supplementation.csv") #on dryad
 
 p.melt<-melt(data, id.vars=c( "temp.rack.cal", "box", "treatment", "cage"), measure.vars=c("diapause9", "diapause", "eggp"), variable.name="pheno", value.name="diapause")
 
@@ -1665,7 +1687,7 @@ files<-files[V6=="nonloco"&V1=="both"&V2=="diapause.bin9"&((V4>=1000&V4<1010)| (
 #read in files
 ld<-foreach(pop=files$V1, phenotype=files$V2,draw=files$V3, perm=files$V4, model=files$V6, .errorhandling="remove")%dopar%{
     print(paste(draw, perm, sep=","))
-    load(paste0("/scratch/pae3g/revisions/lasso/", "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.lassoSites.Rdata"))
+    load(paste0("/scratch/pae3g/revisions/lasso/", "lasso_", phenotype, "_draw",draw, "_perm", perm, "_", model, "_pop", pop, ".dropmissing.lassoSites.Rdata")) #file of all lasso sites is on dryad
     sites[, chr:=tstrsplit(site,split="_")[[1]]]
     sites[, pos:=as.numeric(tstrsplit(site,split="_")[[2]])]
     geno<-snpgdsOpen(paste0("/scratch/pae3g/genome-reconstruction/final2_draw", draw, "_replaced.vcf.gds"))
@@ -1732,9 +1754,9 @@ dev.off()
 # 
 # p<-p[chr%in%(c("2L", "2R", "3L", "3R", "X"))]
 # 
-# save(p, file="/scratch/pae3g/revisions/lasso_snps_dropmissing.Rdata")
+# save(p, file="/scratch/pae3g/revisions/lasso_snps_dropmissing.Rdata") #this file is saved on dryad
 
-load("/scratch/pae3g/revisions/lasso_snps_dropmissing.Rdata")
+load("/scratch/pae3g/revisions/lasso_snps_dropmissing.Rdata") #on dryad
 p.sum<-p[,.(n=.N), .(pop, pheno, loco, GRM, perm, model)]
 
 p.sum[perm!=0&pop=="both", group:="both-permuted"]
@@ -1792,7 +1814,7 @@ library(foreach)
 library(doMC)
 registerDoMC(20)
 
-load("/scratch/pae3g/revisions/lasso_snps_dropmissing.Rdata")
+load("/scratch/pae3g/revisions/lasso_snps_dropmissing.Rdata") #on dryad
 p<-p[chr%in%c("2L", "2R", "3L", "3R", "X")]
 p<-p[model=="nonloco"]
 p[,GRM:=as.integer(GRM)]
@@ -1800,7 +1822,7 @@ p[,perm:=as.integer(perm)]
 
 
 #get list of all samples
-files<-fread("/scratch/pae3g/genome-reconstruction/universal_input.txt")
+files<-fread("/scratch/pae3g/genome-reconstruction/universal_input.txt") #on dryad
 setnames(files, c("pop", "pheno", "GRM", "perm", "seed", "model"))
 files<-files[model=="nonloco"]
 files[,GRM:=as.integer(GRM)]
@@ -1829,7 +1851,7 @@ setnames(pheno.lasso, "GRM", "draw")
 
 
 load("/scratch/pae3g/revisions/gwas_top1percent_dropmissing.Rdat") #on dryad
-files<-fread("/scratch/pae3g/genome-reconstruction/universal_input.txt")
+files<-fread("/scratch/pae3g/genome-reconstruction/universal_input.txt") #on dryad
 setnames(files, c("pop", "phenotype", "GRM", "perm", "seed", "model"))
 files<-files[model=="nonloco"]
 files[,draw:=as.integer(GRM)]
@@ -1933,6 +1955,14 @@ plot_grid(ab.plot,c.plot, nrow=1,labels=c("A", "B") , rel_widths = c(.4, .6), al
 dev.off()
 
 
+#make a statement about how much overlap in individual SNPs exists for text
+load("/scratch/pae3g/revisions/gwas_top1percent_dropmissing.Rdat") #on dryad; loads as y
+top<-copy(y)
+#focus on stage 8, non permuted, both populations, top 0.1%
+top<-top[perm==0&phenotype=="diapause.bin"&pop=="both"&q<=(-3)]
+top.sum<-top[,.(n=.N), .(variant.id, chr, pos)]
+
+
 #####################################
 ## FIGURE S11: Cpo and Tim ##########
 #####################################
@@ -1945,7 +1975,7 @@ theme_set(theme_cowplot())
 
 tim.geno<-fread("/scratch/pae3g/tim_genotypes.csv") #on dryad
 
-phenos <- fread("/scratch/pae3g/revisions/phenos_wolbachia_missinggeno.txt")
+phenos <- fread("/scratch/pae3g/revisions/phenos_wolbachia_missinggeno.txt") #on dryad
 phenos<-phenos[n.chr.imp==5&prop.unknown<=.05]
 phenos[photoperiod==9, pp:="9L:15D"]
 phenos[photoperiod==11, pp:="11L:13D"]
@@ -2209,7 +2239,7 @@ load("/scratch/pae3g/revisions/evolution/single_population_sign_universal_thresh
 
 load("/scratch/pae3g/revisions/lasso_snps_dropmissing.Rdata") #on dryad
 
-load("/scratch/pae3g/oldscratch_recovered/evolution/core20delta.rdat")
+load("/scratch/pae3g/oldscratch_recovered/evolution/core20delta.rdat") #on dryad
 pops<-names(deltas)
 
 library(foreach)
@@ -2252,7 +2282,7 @@ x[,permuted:=ifelse(perm==0, F, T)]
 x.sum<-x[,.(med=median(poly, na.rm=T), q.025=quantile(poly, 0.025, na.rm=T), q.975=quantile(poly, .975, na.rm=T)), .( pheno, pheno2, pop,top, population, group, th, permuted)]
 
 
-popinfo<-fread("/scratch/pae3g/revisions/popinfo_toplot.csv")
+popinfo<-fread("/scratch/pae3g/revisions/popinfo_toplot.csv") # from S1 Table
 setnames(popinfo, "pop", "population")
 
 x.sum<-merge(x.sum, popinfo, by="population")
@@ -2382,7 +2412,7 @@ library(viridis)
 
 #bottom quantiles
 
-load("/scratch/pae3g/revisions/evolution/bergland2014_sign_universal_threshold_dropmissing_bottom_quantiles.Rdata")
+load("/scratch/pae3g/revisions/evolution/bergland2014_sign_universal_threshold_dropmissing_bottom_quantiles.Rdata") #on dryad
 
 b2014<-copy(y)
 
@@ -2507,7 +2537,7 @@ dev.off()
 ###################
 
 #drop tlk data
-load("/scratch/pae3g/revisions/evolution/bergland2014_sign_universal_threshold_dropmissing_droptlk.Rdata")
+load("/scratch/pae3g/revisions/evolution/bergland2014_sign_universal_threshold_dropmissing_droptlk.Rdata")#on dryad
 
 b2014<-copy(y)
 
@@ -2627,7 +2657,7 @@ dev.off()
 ################################################
 
 
-keep.paths<-fread( "/scratch/pae3g/evolution/all_reconstructed_haplotypes_melted.txt")
+keep.paths<-fread( "/scratch/pae3g/evolution/all_reconstructed_haplotypes_melted.txt") #on dryad
 prop.line<-keep.paths[, .(line.length=sum(path.length)),.(line, chromosome, swarm, generation)]
 prop.line[,proportion:=line.length/sum(as.numeric(line.length[chromosome==chromosome]))]
 
@@ -2644,7 +2674,7 @@ for (chr in c("2L", "2R", "3L", "3R", "X")) {
 
 #read in geography and reorder it as a factor
 
-geo<-fread("/scratch/pae3g/evolution/strain_geography.csv") #available in Table S2
+geo<-fread("/scratch/pae3g/evolution/strain_geography.csv") # on dryad also in table S1
 setnames(geo, "strain", "line")
 geo[,geography:=factor(geography, levels=c("Carribean", "Southeast", "DGRP", "PA-Fall", "PA-Spring", "Ithica", "Maine"))]
 prop.line<-merge(prop.line, geo, by="line")
@@ -2839,7 +2869,7 @@ library(foreach)
 library(cowplot)
 library(ggbeeswarm)
 
-acc<-fread("/scratch/pae3g/genome-reconstruction/accuracy.txt")
+acc<-fread("/scratch/pae3g/genome-reconstruction/accuracy.txt") #on dryad
 
 
 acc.sum<-acc[, .(sites=sum(nSites), matches=sum(nMatches.14)), .(ind_id, group)]
@@ -2876,14 +2906,14 @@ geno<-snpgdsOpen("/scratch/pae3g/genome-reconstruction/final3.vcf.gds")
 
 
 #read genotypes and filters
-filters=fread("/scratch/pae3g/final_reconstruction2/hwe_missing_maf_filters.txt")
+filters=fread("/scratch/pae3g/final_reconstruction2/hwe_missing_maf_filters.txt") #on dryad
 
 maf <- 0.05
 missing.rate <- 0.15
 threads <- 20
 pass=filters[qc_filter=="PASS", snp.id]
 
-phenos <- fread("/scratch/pae3g/phenos/phenos_062018.txt")
+phenos <- fread("/scratch/pae3g/phenos/phenos_062018.txt") #newer version of this file is on dryad (no change to phenotype information)
 setkey(phenos, sample.id)
 
 genotyped_samples<- read.gdsn(index.gdsn(geno, "sample.id"))
